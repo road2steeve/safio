@@ -51,8 +51,11 @@ function newRoom(game, hostPid, extra = {}) {
   rooms.set(r.code, r);
   return r;
 }
-function addPlayer(r, { pid, name, avatar }) {
-  if (!r.players.has(pid)) r.players.set(pid, { pid, name: String(name || "").trim().slice(0, 16) || "Player", avatar: String(avatar || "🙂").slice(0, 4), score: 0 });
+const cleanName = (n) => String(n || "").trim().slice(0, 16) || "Player";
+const cleanAv = (a) => String(a || "🙂").slice(0, 4);
+const cleanAc = (c) => (Number.isInteger(c) && c >= 0 && c < 10 ? c : 0); // couleur de fond de l'avatar
+function addPlayer(r, { pid, name, avatar, ac }) {
+  if (!r.players.has(pid)) r.players.set(pid, { pid, name: cleanName(name), avatar: cleanAv(avatar), ac: cleanAc(ac), score: 0, ready: false });
   return r.players.get(pid);
 }
 
@@ -61,7 +64,7 @@ function viewOf(room, pid) {
     code: room.code, hostPid: room.hostPid, game: room.game, phase: room.phase, solo: !!room.solo, auto: !!room.auto,
     settings: room.settings, now: Date.now(), result: room.result, coval: room.coval || [],
     recap: room.phase === "final" ? room.recap || null : null,
-    players: [...room.players.values()].map((p) => ({ pid: p.pid, name: p.name, avatar: p.avatar, score: p.score, connected: p.connected })),
+    players: [...room.players.values()].map((p) => ({ pid: p.pid, name: p.name, avatar: p.avatar, ac: p.ac || 0, ready: !!p.ready, score: p.score, connected: p.connected })),
   };
   if (room.g && room.phase !== "lobby" && room.phase !== "final") {
     v.round = room.g.index + 1;
@@ -130,7 +133,7 @@ const ctx = {
 };
 
 function startGame(room) {
-  for (const p of room.players.values()) p.score = 0;
+  for (const p of room.players.values()) { p.score = 0; p.ready = false; }
   room.result = null;
   room.recap = null;
   GAMES[room.game].start(room, ctx);
@@ -194,36 +197,36 @@ io.on("connection", (socket) => {
   const ME = () => socket.data.me;
   const isHost = () => R() && ME() && R().hostPid === ME().pid;
 
-  socket.on("create", ({ pid, name, avatar, game }, cb) => {
+  socket.on("create", ({ pid, name, avatar, ac, game }, cb) => {
     if (!GAMES[game] || !pid) return cb && cb({ error: "err_game" });
     const r = newRoom(game, pid);
-    attach(socket, r, addPlayer(r, { pid, name, avatar }));
+    attach(socket, r, addPlayer(r, { pid, name, avatar, ac }));
     cb && cb({ code: r.code });
   });
 
-  socket.on("join", ({ code, pid, name, avatar }, cb) => {
+  socket.on("join", ({ code, pid, name, avatar, ac }, cb) => {
     const r = rooms.get(String(code || "").toUpperCase().trim());
     if (!r || !pid) return cb && cb({ error: "err_nf" });
     if (!r.players.has(pid)) {
       if (r.solo || r.quick) return cb && cb({ error: "err_private" });
       if (r.players.size >= 30) return cb && cb({ error: "err_full" });
     }
-    attach(socket, r, addPlayer(r, { pid, name, avatar }));
+    attach(socket, r, addPlayer(r, { pid, name, avatar, ac }));
     cb && cb({ code: r.code });
   });
 
-  socket.on("solo", ({ pid, name, avatar, theme }, cb) => {
+  socket.on("solo", ({ pid, name, avatar, ac, theme }, cb) => {
     if (!pid) return;
     const r = newRoom("duel", pid, { solo: true, auto: true });
     r.settings = cleanSettings("duel", { ...SOLO, theme: theme === "random" ? "all" : theme });
-    attach(socket, r, addPlayer(r, { pid, name, avatar }));
+    attach(socket, r, addPlayer(r, { pid, name, avatar, ac }));
     startGame(r);
     cb && cb({ code: r.code });
   });
 
-  socket.on("quick", ({ pid, name, avatar }) => {
+  socket.on("quick", ({ pid, name, avatar, ac }) => {
     if (!pid || queue.some((q) => q.pid === pid)) return;
-    queue.push({ socket, pid, name, avatar });
+    queue.push({ socket, pid, name, avatar, ac });
     tryMatch();
   });
   socket.on("quickCancel", () => {
@@ -286,6 +289,7 @@ io.on("connection", (socket) => {
     clearTimer(room);
     room.phase = "lobby";
     room.g = null;
+    for (const p of room.players.values()) p.ready = false;
     broadcast(room);
   });
 
@@ -295,6 +299,22 @@ io.on("connection", (socket) => {
     if (!isHost() || !room.players.has(pid) || pid === room.hostPid) return;
     room.coval = room.coval || [];
     room.coval = room.coval.includes(pid) ? room.coval.filter((x) => x !== pid) : [...room.coval, pid];
+    broadcast(room);
+  });
+
+  // Salon : « je suis prêt » et changement de pseudo / avatar
+  socket.on("ready", () => {
+    const room = R(), me = ME();
+    if (!room || !me || room.phase !== "lobby") return;
+    me.ready = !me.ready;
+    broadcast(room);
+  });
+  socket.on("profile", ({ name, avatar, ac } = {}) => {
+    const room = R(), me = ME();
+    if (!room || !me) return;
+    if (name !== undefined) me.name = cleanName(name);
+    if (avatar !== undefined) me.avatar = cleanAv(avatar);
+    if (ac !== undefined) me.ac = cleanAc(ac);
     broadcast(room);
   });
 

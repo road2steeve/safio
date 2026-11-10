@@ -1,16 +1,19 @@
 // ======== Réglages faciles ========
-const APP_NAME = ["SAF", "IO"]; // le nom affiché (2e partie en couleur)
-const AVATARS = ["🦊", "🐼", "🐸", "🐙", "🦁", "🐵", "🐧", "🦄", "🐯", "🐨", "🐷", "🐢", "👽", "🤖", "👻", "🎃", "🌵", "🍕"];
+const APP_NAME = ["SAF", "IO"]; // le nom affiché (2e partie en dégradé)
+const AVATARS = ["🦊", "🐼", "🐸", "🐙", "🦁", "🐵", "🐧", "🦄", "🐯", "🐨", "🐷", "🐢", "🐳", "🦉", "🐝", "🦖", "👽", "🤖", "👻", "🎃", "😎", "🤠", "🥷", "🧙", "🌵", "🍕", "🍩", "🌈"];
 const GAMES = {
-  quiz: { ico: "💡", color: "#4ea8ff" },
-  mytho: { ico: "🎭", color: "#a78bfa" },
-  bac: { ico: "🔤", color: "#2fd6c1" },
-  duel: { ico: "⚡", color: "#4ade80" },
-  brain: { ico: "🤝", color: "#ff5c8a" },
-  youre: { ico: "👉", color: "#ff9f43" },
-  closest: { ico: "🎯", color: "#e0a96d" },
-  torpille: { ico: "🚢", color: "#7aa2c8" },
+  quiz: { ico: "💡", color: "#3b82f6" },
+  mytho: { ico: "🎭", color: "#8b5cf6" },
+  bac: { ico: "🔤", color: "#14b8a6" },
+  duel: { ico: "⚡", color: "#f59e0b" },
+  brain: { ico: "🤝", color: "#ec4899" },
+  youre: { ico: "👉", color: "#f97316" },
+  closest: { ico: "🎯", color: "#eab308" },
+  torpille: { ico: "🚢", color: "#0ea5e9" },
 };
+const MIN_PLAYERS = { mytho: 2, brain: 2, youre: 3, torpille: 2 };
+// Ambiance musicale selon le type de jeu
+const GAME_MUSIC = { quiz: "play", bac: "calm", duel: "fast", closest: "fast", mytho: "calm", brain: "calm", youre: "calm", torpille: "play" };
 
 // ======== Langue & stockage ========
 const store = {
@@ -27,7 +30,7 @@ const catName = (c) => (BAC_CATS[c] ? BAC_CATS[c][lang] : c);
 const gameName = (g) => t("g_" + g);
 const themeName = (th) => (th === "_global" ? t("allThemes") : THEME_INFO[th] ? `${THEME_INFO[th].ico} ${THEME_INFO[th][lang]}` : th);
 function setLang(l) { lang = l; store.set("lang", l); document.documentElement.lang = l; screenKey = ""; render(); }
-const langSelect = () => `<select class="lang" id="langSel" aria-label="${t("language")}">${Object.entries(LANGS).map(([k, v]) => `<option value="${k}" ${k === lang ? "selected" : ""}>${v}</option>`).join("")}</select>`;
+const langSelect = () => `<select class="lang" id="langSel" aria-label="${t("language")}">${Object.entries(LANGS).map(([k, v]) => `<option value="${k}" ${k === lang ? "selected" : ""}>${innerWidth < 520 ? v.split(" ")[0] : v}</option>`).join("")}</select>`;
 
 // ======== État ========
 const $ = (sel) => document.querySelector(sel);
@@ -36,27 +39,38 @@ const app = $("#app");
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 let pid = store.get("pid", null);
 if (!pid) { pid = Math.random().toString(36).slice(2) + Date.now().toString(36); store.set("pid", pid); }
-const me = { name: store.get("name", ""), avatar: store.get("avatar", AVATARS[Math.floor(Math.random() * AVATARS.length)]) };
+const me = {
+  name: store.get("name", ""),
+  avatar: store.get("avatar", AVATARS[Math.floor(Math.random() * AVATARS.length)]),
+  ac: store.get("ac", Math.floor(Math.random() * AV_COLORS.length)),
+};
+const profile = () => ({ pid, name: me.name, avatar: me.avatar, ac: me.ac });
 let S = null;              // dernier état reçu du serveur (null = hors salon)
 let local = "home";        // écran hors salon : home | solo | queue | ranking
 let clockOffset = 0;
 let screenKey = "";
+let sceneKey = "";
 let myAnswer = null;       // réponse envoyée pour la manche en cours
 let bacDraft = [];
 let soloTheme = store.get("soloTheme", "all");
 let rankTheme = "_global", rankPeriod = "week", rankRows = null;
 let queueSize = 0;
 let mergeSel = null;       // Même cerveau : groupe sélectionné par l'hôte
+let homeCat = "all";       // filtre des jeux sur l'accueil
+let avOpen = false;        // panneau avatar ouvert sur l'accueil
+let lastScores = {};       // pour animer les scores qui montent
 
 const socket = io({ auth: { pid } });
 socket.on("connect", () => {
   const code = store.get("room", null);
-  if (code) socket.emit("join", { code, pid, name: me.name, avatar: me.avatar }, (r) => { if (r.error) { store.del("room"); S = null; screenKey = ""; render(); } });
+  if (code) socket.emit("join", { code, ...profile() }, (r) => { if (r.error) { store.del("room"); S = null; screenKey = ""; render(); } });
 });
 socket.on("state", (v) => {
   clockOffset = v.now - Date.now();
+  const prev = S;
   S = v;
   store.set("room", v.code);
+  try { soundFor(prev, v); } catch {}
   render();
 });
 socket.on("queueSize", (n) => { queueSize = n; const el = $("#queueSize"); if (el) el.textContent = t("inQueue", { n }); });
@@ -65,25 +79,69 @@ socket.on("collect", () => { if (S && S.game === "bac" && S.phase === "play") ac
 
 function toast(msg) {
   const el = $("#toast"); el.textContent = msg; el.hidden = false;
+  el.style.animation = "none"; void el.offsetWidth; el.style.animation = "";
   clearTimeout(toast.t); toast.t = setTimeout(() => (el.hidden = true), 3500);
 }
 const act = (d, cb) => socket.emit("act", d, cb);
 const isHost = () => S && S.hostPid === pid && !S.auto;
 const iDid = () => S && (S.answered || []).includes(pid);
 const joinUrl = (code) => `${location.origin}/?code=${code}`;
-const brandHTML = () => `<div class="brand"><img src="logo.svg" alt=""><h1>${APP_NAME[0]}<span>${APP_NAME[1]}</span></h1></div>`;
-const playerOf = (id) => (S && S.players.find((p) => p.pid === id)) || { name: "?", avatar: "❔" };
-const who = (id) => { const p = playerOf(id); return `${p.avatar} ${esc(p.name)}`; };
+const avColor = (i) => AV_COLORS[((i | 0) % AV_COLORS.length + AV_COLORS.length) % AV_COLORS.length];
+const avHTML = (p, cls = "") => `<span class="avt ${cls}" style="--c:${avColor(p.ac)}">${esc(p.avatar)}</span>`;
+const brandHTML = () => `<button class="brand" id="brand" aria-label="SAFIO">${LOGO_SVG}<h1>${APP_NAME[0]}<span>${APP_NAME[1]}</span></h1></button>`;
+const playerOf = (id) => (S && S.players.find((p) => p.pid === id)) || { name: "?", avatar: "❔", ac: 0 };
+const who = (id) => { const p = playerOf(id); return `<span class="who-in">${avHTML(p, "xs")}${esc(p.name)}</span>`; };
 function leaveLocal() { store.del("room"); S = null; local = "home"; screenKey = ""; history.replaceState(null, "", "/"); render(); }
 function needName() {
   const el = $("#name");
   if (el) { me.name = el.value.trim(); store.set("name", me.name); }
-  if (!me.name) { local = "home"; screenKey = ""; render(); toast(t("needName")); $("#name") && $("#name").focus(); return false; }
+  if (!me.name) {
+    if (local !== "home" || !$("#name")) { local = "home"; screenKey = ""; render(); }
+    toast(t("needName"));
+    const n = $("#name"); if (n) { n.scrollIntoView({ block: "center", behavior: "smooth" }); n.focus(); }
+    return false;
+  }
   return true;
+}
+
+// ======== Son : réactions aux changements d'état ========
+function soundFor(prev, v) {
+  if (!prev || prev.code !== v.code) { if (v.phase === "play" || v.phase === "starting") Sound.play("start"); return; }
+  const n0 = prev.players.length, n1 = v.players.length;
+  if (v.phase === "lobby" && n1 > n0) Sound.play("join");
+  if (v.phase === "lobby" && n1 < n0) Sound.play("leave");
+  const r0 = prev.players.filter((p) => p.ready).length, r1 = v.players.filter((p) => p.ready).length;
+  if (v.phase === "lobby" && r1 > r0) Sound.play("ready");
+  if ((prev.phase === "lobby" || prev.phase === "final" || prev.phase === "starting") && v.phase === "play") Sound.play("start");
+  if (v.game === "duel" && v.phase === "play" && "myOk" in v && !("myOk" in prev)) Sound.play(v.myOk ? "correct" : "wrong");
+  if (v.game === "bac" && v.phase === "play" && v.stoppedBy && !prev.stoppedBy) Sound.play("stop");
+  if (v.game === "torpille" && v.boards && prev.boards) {
+    const cnt = (b, k) => Object.values(b).reduce((s, x) => s + Object.values(x.shots || {}).filter((y) => y === k).length, 0);
+    if (cnt(v.boards, "hit") > cnt(prev.boards, "hit")) Sound.play("hit");
+    else if (cnt(v.boards, "miss") > cnt(prev.boards, "miss")) Sound.play("splash");
+  }
+  if (prev.phase === "play" && v.phase === "review") {
+    const g = (v.gains || {})[pid];
+    if (v.game !== "duel" && v.judged && pid in (v.judged || {}) && v.game !== "quiz") Sound.play(v.judged[pid] ? "correct" : "wrong");
+    if (g > 0) setTimeout(() => Sound.play("points"), 350);
+  }
+  const rank = (s) => [...s.players].sort((a, b) => b.score - a.score).findIndex((p) => p.pid === pid);
+  if (v.phase !== "lobby" && prev.phase !== "lobby" && rank(v) < rank(prev)) setTimeout(() => Sound.play("rankUp"), 600);
+  if (prev.phase !== "final" && v.phase === "final") {
+    const top = [...v.players].sort((a, b) => b.score - a.score)[0];
+    Sound.play(top && top.pid === pid && top.score > 0 ? "victory" : "end");
+  }
+}
+function musicFor() {
+  if (!S) return Sound.music(local === "queue" ? "lobby" : "home");
+  if (S.phase === "lobby" || S.phase === "starting") return Sound.music("lobby");
+  if (S.phase === "final") return Sound.music("calm");
+  Sound.music(GAME_MUSIC[S.game] || "play");
 }
 
 // ======== Rendu principal ========
 function render() {
+  musicFor();
   if (!S) return renderLocal();
   const g = S;
   let dyn = "";
@@ -93,6 +151,7 @@ function render() {
     if (g.game === "duel") dyn += "," + g.myOk;
     if (g.game === "torpille" && g.step === "shoot") dyn += JSON.stringify([g.boards, g.target, g.shotsLeft]);
   }
+  if (g.phase === "lobby") dyn = isHost() ? "h" : "p";
   if (g.phase === "review" || g.phase === "final") dyn = JSON.stringify([g.judged, g.valid, g.groups, g.result, g.players.map((p) => p.pid), mergeSel, g.page, g.entries, g.coval, g.marks, g.comments, g.recap]);
   const key = [lang, g.code, g.phase, g.game, g.round, g.hostPid, JSON.stringify(g.settings), dyn].join("|");
   if (key !== screenKey) {
@@ -100,17 +159,25 @@ function render() {
     if (g.phase === "play" && !sameRound) { myAnswer = null; bacDraft = []; }
     if (g.phase !== "review") mergeSel = null;
     if (g.phase === "play" && g.game === "bac" && sameRound && $("[data-bac]")) bacDraft = readBac();
+    const scrollY = window.scrollY;
+    const sk = [g.code, g.phase, g.game, g.round, g.step, g.page].join("|");
+    const newScene = sk !== sceneKey;
+    sceneKey = sk;
     screenKey = key;
     app.innerHTML = roomShell();
-    $("#main").innerHTML = mainHTML();
+    const main = $("#main");
+    main.innerHTML = mainHTML();
+    if (newScene) { main.classList.add("scene-in"); if (g.phase !== "lobby") window.scrollTo({ top: 0 }); }
+    else window.scrollTo({ top: scrollY });
     bindRoom();
+    if (g.phase === "final" && newScene) confetti();
   }
   updateLive();
 }
 
 function mainHTML() {
   if (S.phase === "lobby") return lobbyHTML();
-  if (S.phase === "starting") return `<div class="stage"><p class="big-msg">⚡ ${t("matchFound")}</p></div>`;
+  if (S.phase === "starting") return `<div class="stage" style="padding:60px 0"><div class="spinner"></div><p class="big-msg">⚡ ${t("matchFound")}</p></div>`;
   if (S.phase === "final") return finalHTML();
   const fn = {
     quiz: [qaPlay, quizReview], duel: [qaPlay, quizReview], closest: [qaPlay, closestReview], bac: [bacPlay, bacReview],
@@ -119,9 +186,67 @@ function mainHTML() {
   return S.phase === "play" ? fn[0]() : fn[1]();
 }
 
+// ======== En-tête commun ========
+function navHTML(inRoom) {
+  const links = inRoom ? "" : `<nav class="nav-links"><a href="#games">${t("nav_games")}</a><a href="#how">${t("nav_how")}</a><a href="#" id="navRank">${t("nav_ranking")}</a></nav>`;
+  const g = inRoom && S ? GAMES[S.game] : null;
+  const pill = inRoom && S ? `<span class="room-pill"><span class="gi">${g.ico}</span><span class="hide-sm">${gameName(S.game)}</span>${S.solo ? "" : S.auto ? "" : `<span class="room-code">${S.code}</span>`}</span>` : "";
+  return `<header class="nav">${brandHTML()}${links}
+    <div class="nav-right">${pill}
+      <button class="icon-btn" id="sndBtn" aria-label="${t("soundTitle")}">${soundIcon()}</button>
+      ${langSelect()}
+      ${inRoom ? "" : `<button class="btn violet small create-top" id="createTop">${t("createGame")}</button>`}
+    </div></header>`;
+}
+const soundIcon = () => { const p = Sound.prefs; return p.muted || (!p.music && !p.sfx) ? "🔇" : "🔊"; };
+function bindNav() {
+  const on = (sel, fn) => { const el = $(sel); if (el) el.onclick = fn; };
+  const ls = $("#langSel"); if (ls) ls.onchange = (e) => setLang(e.target.value);
+  on("#sndBtn", openSound);
+  on("#brand", () => { if (!S) { local = "home"; screenKey = ""; render(); window.scrollTo({ top: 0, behavior: "smooth" }); } });
+  on("#navRank", (e) => { e.preventDefault(); openRanking("_global"); });
+  on("#createTop", () => { if (local !== "home") { local = "home"; screenKey = ""; render(); } const g = $("#games"); if (g) g.scrollIntoView({ behavior: "smooth" }); });
+}
+
+// ======== Panneau son ========
+function openSound() {
+  const old = $("#soundModal"); if (old) old.remove();
+  Sound.unlock();
+  const el = document.createElement("div");
+  el.className = "modal-back"; el.id = "soundModal";
+  const draw = () => {
+    const p = Sound.prefs;
+    el.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="${t("soundTitle")}">
+      <h3>${t("soundTitle")} <button class="x" id="sndClose" aria-label="${t("close")}">✕</button></h3>
+      <div class="snd-row"><div class="snd-top"><span>🎵 ${t("musicLbl")}</span><button class="switch ${p.music ? "on" : ""}" data-sw="music" aria-label="${t("musicLbl")}"></button></div>
+        <input type="range" min="0" max="1" step="0.05" value="${p.mv}" data-vol="mv" aria-label="${t("volume")}"></div>
+      <div class="snd-row"><div class="snd-top"><span>🔔 ${t("sfxLbl")}</span><button class="switch ${p.sfx ? "on" : ""}" data-sw="sfx" aria-label="${t("sfxLbl")}"></button></div>
+        <input type="range" min="0" max="1" step="0.05" value="${p.sv}" data-vol="sv" aria-label="${t("volume")}"></div>
+      <button class="btn ${p.muted ? "teal" : "coral"} big" id="muteAll" style="margin-top:16px">${p.muted ? "🔊 " + t("unmuteAll") : "🔇 " + t("muteAll")}</button>
+      <p class="muted small" style="margin-top:10px;text-align:center">${t("soundHint")}</p></div>`;
+    el.querySelectorAll("[data-sw]").forEach((b) => (b.onclick = () => { Sound.set(b.dataset.sw, !Sound.prefs[b.dataset.sw]); draw(); Sound.play("click"); }));
+    el.querySelectorAll("[data-vol]").forEach((r) => (r.oninput = () => Sound.set(r.dataset.vol, +r.value)));
+    el.querySelectorAll("[data-vol=sv]").forEach((r) => (r.onchange = () => Sound.play("points")));
+    el.querySelector("#muteAll").onclick = () => { Sound.set("muted", !Sound.prefs.muted); draw(); };
+    el.querySelector("#sndClose").onclick = close;
+  };
+  const close = () => { el.remove(); const b = $("#sndBtn"); if (b) b.innerHTML = soundIcon(); };
+  el.onclick = (e) => { if (e.target === el) close(); };
+  document.addEventListener("keydown", function k(e) { if (e.key === "Escape") { close(); document.removeEventListener("keydown", k); } });
+  draw();
+  document.body.appendChild(el);
+}
+Sound.onChange(() => { const b = $("#sndBtn"); if (b) b.innerHTML = soundIcon(); });
+
+// Clic sonore sur les éléments interactifs importants
+document.addEventListener("click", (e) => {
+  const el = e.target.closest(".btn, .chip, .tab, .gp, .theme, .option, .vote-btn, .mark, .icon-btn, .avatar-grid button, .color-row button");
+  if (el && !el.disabled) Sound.play(el.matches(".btn.primary, .btn.big") ? "pop" : "click");
+}, true);
+
 // ======== Écrans hors salon ========
 function renderLocal() {
-  const key = "local|" + lang + "|" + local + "|" + soloTheme + "|" + rankTheme + "|" + rankPeriod + "|" + JSON.stringify(rankRows);
+  const key = "local|" + lang + "|" + local + "|" + soloTheme + "|" + rankTheme + "|" + rankPeriod + "|" + JSON.stringify(rankRows) + "|" + homeCat + "|" + avOpen + "|" + me.avatar + me.ac;
   if (key === screenKey) return;
   screenKey = key;
   if (local === "solo") return renderSolo();
@@ -130,76 +255,112 @@ function renderLocal() {
   renderHome();
 }
 
+function avatarEditor(cur) {
+  return `<div class="avatar-panel"><p class="label">${t("pickAvatar")}</p>
+    <div class="avatar-grid" id="avGrid">${AVATARS.map((a) => `<button data-av="${a}" class="${a === cur.avatar ? "on" : ""}" aria-label="${a}">${a}</button>`).join("")}</div>
+    <p class="label" style="margin-top:12px">${t("avColor")}</p>
+    <div class="color-row">${AV_COLORS.map((c, i) => `<button data-ac="${i}" class="${i === cur.ac ? "on" : ""}" style="--c:${c}" aria-label="${t("avColor")} ${i + 1}"></button>`).join("")}</div></div>`;
+}
+
+function gameCard(id, i) {
+  const m = GAME_META[id];
+  return `<article class="gcard" data-card="${id}" style="animation-delay:${i * 0.05}s">
+    ${m.tags.includes("new") ? `<span class="tagnew">${t("cat_new")}</span>` : ""}${ART[id]}
+    <div class="gbody"><h3>${gameName(id)}</h3><p>${t("g_" + id + "_d")}</p>
+      <div class="gmeta"><span>👥 ${t("playersN", { n: m.players })}</span><span>⏱ ${t("minutes", { n: m.mins })}</span></div>
+      <button class="btn violet" data-create="${id}">${t("playBtn")} ▸</button></div></article>`;
+}
+
 function renderHome() {
   const preCode = new URLSearchParams(location.search).get("code") || "";
-  app.innerHTML = `
-  <div class="home">
-    <section class="hero">
-      <div class="topbar" style="margin:0">${brandHTML()}${langSelect()}</div>
-      <p class="lead">${t("tagline")}</p>
-      <div class="badges"><span class="badge">${t("free")}</span><span class="badge">${t("noAccount")}</span><span class="badge">${t("remote")}</span></div>
-      <div class="modes">
-        <button class="mode-tile" id="goSolo"><b>${t("soloMode")}</b><span>${t("soloMode_d")}</span></button>
-        <button class="mode-tile" id="goQuick"><b>${t("quickMode")}</b><span>${t("quickMode_d")}</span></button>
-        <button class="mode-tile" id="goRank"><b>${t("worldRanking")}</b></button>
+  const cats = ["all", "popular", "new", "quick", "friends"];
+  const ids = Object.keys(GAMES).filter((id) => homeCat === "all" || GAME_META[id].tags.includes(homeCat));
+  app.innerHTML = `${navHTML(false)}
+  <section class="hero">
+    <div>
+      <span class="kicker"><i></i>${t("heroKicker")}</span>
+      <h2>${t("heroTitle").replace(/(\S+)\s*$/, '<span class="grad">$1</span>')}</h2>
+      <p class="sub-lead">${t("heroSub")}</p>
+      <div class="hero-ctas">
+        <button class="btn primary" id="ctaCreate">🎉 ${t("ctaCreate")}</button>
+        <button class="btn ghost" id="ctaJoin">🔑 ${t("ctaJoin")}</button>
       </div>
-    </section>
-    <section class="card">
-      <p class="label">${t("nickname")}</p>
-      <div class="row">
-        <button class="avatar-btn" id="avBtn">${me.avatar}</button>
-        <input class="input" id="name" maxlength="16" placeholder="${t("namePh")}" value="${esc(me.name)}" autocomplete="nickname">
+      <p class="trust">${t("noSignup")}</p>
+    </div>
+    <div class="hero-deco">
+      <div class="floaties"><span class="floaty" style="right:10px;top:0">🎲</span><span class="floaty" style="right:120px;top:-26px;animation-delay:-2s">⚡</span><span class="floaty" style="right:30px;top:330px;animation-delay:-4s">🏆</span></div>
+      <div class="card profile-card">
+        <p class="label">${t("yourProfile")}</p>
+        <div class="avatar-pick">
+          <button class="avatar-btn" id="avBtn" aria-label="${t("pickAvatar")}">${avHTML(me, "lg")}<span class="edit">✎</span></button>
+          <input class="input" id="name" maxlength="16" placeholder="${t("namePh")}" value="${esc(me.name)}" autocomplete="nickname">
+        </div>
+        ${avOpen ? avatarEditor(me) : ""}
+        <p class="label" id="joinZone">${t("codeLbl")}</p>
+        <div class="row">
+          <input class="input code-input" id="code" maxlength="4" placeholder="ABCD" value="${esc(preCode)}" autocomplete="off" autocapitalize="characters" inputmode="text">
+          <button class="btn teal" id="joinBtn">${t("join")}</button>
+        </div>
       </div>
-      <div class="avatar-grid" id="avGrid" hidden>${AVATARS.map((a) => `<button data-av="${a}" class="${a === me.avatar ? "on" : ""}">${a}</button>`).join("")}</div>
-      <p class="label" style="margin-top:18px">${t("haveCode")}</p>
-      <div class="row">
-        <input class="input code-input" id="code" maxlength="4" placeholder="CODE" value="${esc(preCode)}" autocomplete="off" autocapitalize="characters">
-        <button class="btn teal" id="joinBtn">${t("join")}</button>
-      </div>
-      <div class="sep">${t("orCreate")}</div>
-      <div class="games">
-        ${Object.entries(GAMES).map(([id, g]) => `
-          <button class="game-tile" data-create="${id}">
-            <span class="game-ico" style="background:${g.color}22;color:${g.color}">${g.ico}</span>
-            <span><h3>${gameName(id)}</h3><p>${t("g_" + id + "_d")}</p></span>
-          </button>`).join("")}
-      </div>
-    </section>
-  </div>`;
-  $("#langSel").onchange = (e) => setLang(e.target.value);
-  $("#avBtn").onclick = () => ($("#avGrid").hidden = !$("#avGrid").hidden);
-  $("#avGrid").onclick = (e) => {
-    const a = e.target.closest("[data-av]"); if (!a) return;
-    me.avatar = a.dataset.av; store.set("avatar", me.avatar);
-    $("#avBtn").textContent = me.avatar; $("#avGrid").hidden = true;
-  };
+    </div>
+  </section>
+
+  <section class="section" id="games">
+    <div class="section-head"><div><h2>${t("gamesTitle")}</h2><p>${t("gamesSub")}</p></div>
+      <div class="tabs" role="tablist">${cats.map((c) => `<button class="tab ${homeCat === c ? "on" : ""}" data-cat-tab="${c}" role="tab" aria-selected="${homeCat === c}">${t("cat_" + c)}</button>`).join("")}</div></div>
+    <div class="game-cards">${ids.map(gameCard).join("")}</div>
+  </section>
+
+  <section class="section" id="how">
+    <div class="section-head"><div><h2>${t("howTitle")}</h2></div></div>
+    <div class="how">${[1, 2, 3].map((n, i) => `<div class="how-step"><b style="background:${["var(--violet)", "var(--blue)", "var(--turq)"][i]}">${n}</b><span>${t("how" + n)}</span></div>`).join("")}</div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><div><h2>${t("nowTitle")}</h2></div></div>
+    <div class="modes">
+      <button class="mode-tile" id="goSolo"><b>${t("soloMode")}</b><span>${t("soloMode_d")}</span></button>
+      <button class="mode-tile" id="goQuick"><b>${t("quickMode")}</b><span>${t("quickMode_d")}</span></button>
+      <button class="mode-tile" id="goRank"><b>${t("worldRanking")}</b><span>${t("nav_ranking")}</span></button>
+    </div>
+  </section>
+  <footer class="footer">SAFIO · ${t("noSignup")}</footer>`;
+  bindNav();
+  $("#avBtn").onclick = () => { avOpen = !avOpen; screenKey = ""; render(); };
+  $$("[data-av]").forEach((b) => (b.onclick = () => { me.avatar = b.dataset.av; store.set("avatar", me.avatar); screenKey = ""; render(); }));
+  $$("[data-ac]").forEach((b) => (b.onclick = () => { me.ac = +b.dataset.ac; store.set("ac", me.ac); screenKey = ""; render(); }));
   $("#name").oninput = () => { me.name = $("#name").value.trim(); store.set("name", me.name); };
   const join = () => {
     if (!needName()) return;
     const code = $("#code").value.trim().toUpperCase();
-    if (code.length !== 4) return toast(t("code4"));
-    socket.emit("join", { code, pid, name: me.name, avatar: me.avatar }, (r) => r.error && toast(t(r.error)));
+    if (code.length !== 4) { $("#code").focus(); return toast(t("code4")); }
+    socket.emit("join", { code, ...profile() }, (r) => r.error && toast(t(r.error)));
   };
   $("#joinBtn").onclick = join;
   $("#code").onkeydown = (e) => e.key === "Enter" && join();
-  $$("[data-create]").forEach((b) => (b.onclick = () => {
+  $("#ctaJoin").onclick = () => { const c = $("#code"); c.scrollIntoView({ block: "center", behavior: "smooth" }); c.focus(); };
+  $("#ctaCreate").onclick = () => $("#games").scrollIntoView({ behavior: "smooth" });
+  $$("[data-cat-tab]").forEach((b) => (b.onclick = () => { homeCat = b.dataset.catTab; screenKey = ""; const y = scrollY; render(); scrollTo({ top: y }); }));
+  const create = (game) => {
     if (!needName()) return;
-    socket.emit("create", { pid, name: me.name, avatar: me.avatar, game: b.dataset.create }, (r) => r.error && toast(t(r.error)));
-  }));
+    socket.emit("create", { ...profile(), game }, (r) => r.error && toast(t(r.error)));
+  };
+  $$("[data-create]").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); create(b.dataset.create); }));
+  $$("[data-card]").forEach((c) => (c.onclick = () => create(c.dataset.card)));
   $("#goSolo").onclick = () => { if (needName()) { local = "solo"; render(); } };
   $("#goQuick").onclick = () => {
     if (!needName()) return;
     local = "queue"; render();
-    socket.emit("quick", { pid, name: me.name, avatar: me.avatar });
+    socket.emit("quick", profile());
   };
   $("#goRank").onclick = () => openRanking("_global");
   if (preCode && me.name) $("#joinBtn").focus(); else if (preCode) $("#name").focus();
 }
 
 function localShell(title, body) {
-  app.innerHTML = `<div class="topbar">${brandHTML()}${langSelect()}</div>
-    <section class="card narrow"><button class="btn ghost small" id="back">${t("back")}</button><h2 class="title">${title}</h2>${body}</section>`;
-  $("#langSel").onchange = (e) => setLang(e.target.value);
+  app.innerHTML = `${navHTML(false)}
+    <section class="card narrow" style="margin-top:18px"><button class="btn ghost small" id="back">← ${t("back").replace(/^←\s*/, "")}</button><h2 class="title">${title}</h2>${body}</section>`;
+  bindNav();
   $("#back").onclick = () => { if (local === "queue") socket.emit("quickCancel"); local = "home"; render(); };
 }
 
@@ -211,12 +372,12 @@ function renderSolo() {
     <div class="actions"><button class="btn ghost" id="soloRank">${t("worldRanking")}</button></div>
     <button class="btn primary big" id="soloGo" style="margin-top:16px">${t("play")}</button>`);
   $$("[data-st]").forEach((b) => (b.onclick = () => { soloTheme = b.dataset.st; store.set("soloTheme", soloTheme); render(); }));
-  $("#soloGo").onclick = () => socket.emit("solo", { pid, name: me.name, avatar: me.avatar, theme: soloTheme });
+  $("#soloGo").onclick = () => socket.emit("solo", { ...profile(), theme: soloTheme });
   $("#soloRank").onclick = () => openRanking(soloTheme === "random" ? "all" : soloTheme);
 }
 
 function renderQueue() {
-  localShell(t("quickMode"), `<div class="stage"><div class="spinner"></div><p class="big-msg">${t("searching")}</p>
+  localShell(t("quickMode"), `<div class="stage" style="padding:30px 0">${avHTML(me, "xl")}<div class="spinner"></div><p class="big-msg">${t("searching")}</p>
     <p class="muted" id="queueSize">${t("inQueue", { n: queueSize })}</p></div>`);
 }
 
@@ -239,25 +400,13 @@ function renderRanking() {
 
 // ======== Salon ========
 function roomShell() {
-  const g = GAMES[S.game];
-  const label = S.solo ? t("soloTitle") : S.auto ? t("quickMode") : `${t("room")} <span class="room-code">${S.code}</span>`;
-  return `
-  <div class="topbar">
-    ${brandHTML()}
-    <div class="row" style="align-items:center">
-      <div style="text-align:right">
-        <div class="small muted">${g.ico} ${gameName(S.game)}</div>
-        <div class="small">${label}</div>
-      </div>
-      ${langSelect()}
-    </div>
-  </div>
+  return `${navHTML(true)}
   <div class="layout">
-    <section class="card" id="main"></section>
+    <section class="card g-${S.game}" id="main"></section>
     <aside class="card">
-      <p class="label">${t("players")} (<span id="nbPlayers"></span>)</p>
+      <div class="side-head"><p class="label" style="margin:0">${S.phase === "lobby" ? t("playersInRoom") : t("scoresLbl")} · <span id="nbPlayers"></span></p></div>
       <div class="players" id="players"></div>
-      <div class="actions" style="justify-content:flex-start;margin-top:16px">
+      <div class="side-actions">
         ${isHost() && S.phase !== "lobby" ? `<button class="btn ghost small" id="toLobby">${t("backLobby")}</button>` : ""}
         <button class="btn ghost small" id="leave">${t("leave")}</button>
       </div>
@@ -268,78 +417,113 @@ function roomShell() {
 function slider(key, label, min, max, step, unit = "") {
   const v = S.settings[key];
   return `<div class="slider"><div class="slider-head"><span>${label}</span><b id="lbl-${key}">${v}${unit}</b></div>
-    <input type="range" min="${min}" max="${max}" step="${step}" value="${v}" data-range="${key}" data-unit="${unit}"></div>`;
+    <input type="range" min="${min}" max="${max}" step="${step}" value="${v}" data-range="${key}" data-unit="${unit}" aria-label="${label}"></div>`;
 }
-function howToHTML(g) {
+function howToHTML(g, open = true) {
   const R = (typeof RULES !== "undefined" && (RULES[lang] || RULES.fr)[g]) || null;
   const head = `<div class="howto-head"><b>${GAMES[g].ico} ${t("howTo", { g: gameName(g) })}</b><span class="muted small">${t("p_" + g)}</span></div>`;
   if (!R) return `<div class="howto">${head}<p>${t("r_" + g)}</p></div>`;
   const ex = R.ex;
-  return `<div class="howto">${head}
+  return `<details class="howto" ${open ? "open" : ""}><summary>${head}</summary>
     <div class="ex"><p class="label">${RULES_UI[lang] ? RULES_UI[lang].ex : RULES_UI.fr.ex}</p>
       ${ex.top ? `<div class="ex-top">${ex.top}</div>` : ""}
       <div class="ex-rows">${ex.rows.map((r) => `<div class="ex-row"><b>${r[0]}</b><span>${r[1]}</span>${r[2] ? `<em class="${r[2].startsWith("+") ? "plus" : ""}">${r[2]}</em>` : ""}</div>`).join("")}</div>
       ${ex.note ? `<p class="muted small">${ex.note}</p>` : ""}</div>
     <p class="label" style="margin-top:12px">${RULES_UI[lang] ? RULES_UI[lang].rules : RULES_UI.fr.rules}</p>
-    <ol class="rules">${R.steps.map((s) => `<li>${s}</li>`).join("")}</ol></div>`;
+    <ol class="rules">${R.steps.map((s) => `<li>${s}</li>`).join("")}</ol></details>`;
 }
 
 function lobbyHTML() {
   const s = S.settings, host = isHost(), G = S.game;
-  let settings = "";
-  if (host) {
-    settings = `<div class="settings"><div><h3 class="sub" style="margin-bottom:10px">${t("game")}</h3>
-      <div class="games two">${Object.entries(GAMES).map(([id, g]) => `<button class="game-tile ${G === id ? "on" : ""}" data-game="${id}"><span class="game-ico" style="background:${g.color}22;color:${g.color}">${g.ico}</span><span><h3>${gameName(id)}</h3><p>${t("g_" + id + "_d")}</p></span></button>`).join("")}</div></div>
-      ${howToHTML(G)}`;
-    if ("themes" in s) {
-      const sel = s.themes || [];
-      const ids = Object.keys(THEME_INFO).filter((id) => id !== "random" && id !== "all");
-      settings += `<div><h3 class="sub">${t("theme")} <span class="muted small">(${sel.length ? sel.length : t("allThemes")})</span></h3><p class="muted small" style="margin:4px 0 12px">${t("themesHint")}</p>
-        <div class="theme-grid"><button class="theme special ${sel.length ? "" : "on"}" data-tm="all"><span>${THEME_INFO.all.ico}</span>${THEME_INFO.all[lang]}</button>${ids.map((id) => `<button class="theme ${sel.includes(id) ? "on" : ""}" data-tm="${id}"><span>${THEME_INFO[id].ico}</span>${THEME_INFO[id][lang]}</button>`).join("")}</div></div>`;
-    }
-    if ("theme" in s) settings += `<div><h3 class="sub">${t("theme")}</h3><p class="muted small" style="margin:4px 0 12px">${t("themeHint")}</p>${themeGrid(s.theme, 'data-set="theme" data-val')}</div>`;
-    const sl = [];
-    if ("time" in s) sl.push(slider("time", G === "bac" ? t("timePerRound") : t("timePerQ"), G === "bac" ? 30 : G === "duel" ? 5 : 10, G === "bac" ? 300 : G === "duel" ? 60 : 120, 5, " s"));
-    if ("count" in s) sl.push(slider("count", t(G === "torpille" ? "rounds" : "questions"), 3, G === "closest" ? 20 : 30, 1));
-    if ("rounds" in s) sl.push(slider("rounds", t("rounds"), 1, 10, 1));
-    settings += `<div class="sliders"><h3 class="sub">${t("settings")}</h3>${sl.join("")}</div>`;
-    if (G === "bac") settings += `<p class="muted small">${t("covalHint")}</p>`;
-    if (G === "quiz") settings += `<p class="muted small">${t("covalHintQuiz")}</p>`;
-    if (G === "bac") settings += `<div><p class="label">${t("catMode")}</p><div class="chips">
-      <button class="chip ${s.mix ? "on" : ""}" data-mix="1">🎲 ${t("catMix")}</button><button class="chip ${s.mix ? "" : "on"}" data-mix="0">📌 ${t("catFixed")}</button></div>
-      <p class="muted small" style="margin-top:6px">${t(s.mix ? "catMixHint" : "catFixedHint")}</p>
-      ${s.mix ? `<div class="sliders" style="margin-top:8px">${slider("perRound", t("perRound"), 3, 10, 1)}</div>` : ""}</div>`;
-    if (G === "bac") settings += `
-      <div><p class="label">${s.mix ? t("myCats") : t("categories")} (${s.mix ? s.categories.filter((c) => !BAC_CATS[c]).length : s.categories.length})</p><div class="chips">${(s.mix ? s.categories.filter((c) => !BAC_CATS[c]) : [...new Set([...Object.keys(BAC_CATS), ...s.categories])]).map((c) => `<button class="chip ${s.categories.includes(c) ? "on" : ""}" data-cat="${esc(c)}">${esc(catName(c))}</button>`).join("")}</div>
-        <div class="row" style="margin-top:10px"><input class="input" id="newCat" maxlength="30" placeholder="${t("addCat")}"><button class="btn" id="addCat">+</button></div></div>`;
-    settings += `</div>`;
-  }
-  return `
-    <div class="join-box">
+  const url = joinUrl(S.code).replace(/^https?:\/\//, "");
+  const invite = `<div class="invite">
       <div class="qr" id="qr"></div>
       <div>
-        <p class="label">${t("toJoin")}</p>
-        <p class="muted">${t("scanOr", { host: esc(location.host) })}</p>
+        <p class="label">${t("inviteFriends")}</p>
         <div class="code-big">${S.code}</div>
-        <button class="btn ghost small" id="share" style="margin-top:10px">${t("share")}</button>
+        <p class="url">${esc(url)}</p>
+        <div class="actions"><button class="btn teal small" id="share">${t("share")}</button><button class="btn ghost small" id="copyLink">🔗 ${t("copyLink")}</button></div>
       </div>
-    </div>
-    ${host ? settings + `<button class="btn primary big" id="start" style="margin-top:20px">${t("start")}</button>` : `${howToHTML(G)}<p class="sent" style="margin-top:20px;color:var(--muted)">${t("waitStart")}</p>`}`;
+    </div>`;
+  const crowd = `<div class="panel"><p class="label">${t("playersInRoom")}</p><div class="crowd" id="crowd"></div>
+    ${host ? "" : `<div class="actions"><button class="btn ghost small" id="editMe">✎ ${t("editProfile")}</button></div>`}</div>`;
+  if (!host) {
+    return `<div class="lobby">${invite}${crowd}
+      ${howToHTML(G)}
+      <div class="startbar"><div class="status" id="startStatus"></div><button class="btn green" id="readyBtn"></button></div></div>`;
+  }
+  let settings = "";
+  if ("themes" in s) {
+    const sel = s.themes || [];
+    const ids = Object.keys(THEME_INFO).filter((id) => id !== "random" && id !== "all");
+    settings += `<div><h3 class="sub">${t("theme")} <span class="muted small">(${sel.length ? sel.length : t("allThemes")})</span></h3><p class="muted small" style="margin:4px 0 12px">${t("themesHint")}</p>
+      <div class="theme-grid"><button class="theme special ${sel.length ? "" : "on"}" data-tm="all"><span>${THEME_INFO.all.ico}</span>${THEME_INFO.all[lang]}</button>${ids.map((id) => `<button class="theme ${sel.includes(id) ? "on" : ""}" data-tm="${id}"><span>${THEME_INFO[id].ico}</span>${THEME_INFO[id][lang]}</button>`).join("")}</div></div>`;
+  }
+  if ("theme" in s) settings += `<div><h3 class="sub">${t("theme")}</h3><p class="muted small" style="margin:4px 0 12px">${t("themeHint")}</p>${themeGrid(s.theme, 'data-set="theme" data-val')}</div>`;
+  const sl = [];
+  if ("time" in s) sl.push(slider("time", G === "bac" ? t("timePerRound") : t("timePerQ"), G === "bac" ? 30 : G === "duel" ? 5 : 10, G === "bac" ? 300 : G === "duel" ? 60 : 120, 5, " s"));
+  if ("count" in s) sl.push(slider("count", t(G === "torpille" ? "rounds" : "questions"), 3, G === "closest" ? 20 : 30, 1));
+  if ("rounds" in s) sl.push(slider("rounds", t("rounds"), 1, 10, 1));
+  settings += `<div class="sliders">${sl.join("")}</div>`;
+  if (G === "bac") settings += `<p class="muted small">${t("covalHint")}</p>`;
+  if (G === "quiz") settings += `<p class="muted small">${t("covalHintQuiz")}</p>`;
+  if (G === "bac") settings += `<div><p class="label">${t("catMode")}</p><div class="chips">
+    <button class="chip ${s.mix ? "on" : ""}" data-mix="1">🎲 ${t("catMix")}</button><button class="chip ${s.mix ? "" : "on"}" data-mix="0">📌 ${t("catFixed")}</button></div>
+    <p class="muted small" style="margin-top:6px">${t(s.mix ? "catMixHint" : "catFixedHint")}</p>
+    ${s.mix ? `<div class="sliders" style="margin-top:8px">${slider("perRound", t("perRound"), 3, 10, 1)}</div>` : ""}</div>`;
+  if (G === "bac") settings += `
+    <div><p class="label">${s.mix ? t("myCats") : t("categories")} (${s.mix ? s.categories.filter((c) => !BAC_CATS[c]).length : s.categories.length})</p><div class="chips">${(s.mix ? s.categories.filter((c) => !BAC_CATS[c]) : [...new Set([...Object.keys(BAC_CATS), ...s.categories])]).map((c) => `<button class="chip ${s.categories.includes(c) ? "on" : ""}" data-cat="${esc(c)}">${esc(catName(c))}</button>`).join("")}</div>
+      <div class="row" style="margin-top:10px"><input class="input" id="newCat" maxlength="30" placeholder="${t("addCat")}"><button class="btn" id="addCat">+</button></div></div>`;
+  return `<div class="lobby">
+    <p class="host-banner">👑 ${t("hostPanel")}</p>
+    ${invite}${crowd}
+    <div class="panel"><p class="label">${t("chooseGame")}</p>
+      <div class="game-pick">${Object.keys(GAMES).map((id) => `<button class="gp ${G === id ? "on" : ""}" data-game="${id}">${ART[id]}<b>${GAMES[id].ico} ${gameName(id)}</b></button>`).join("")}</div></div>
+    ${howToHTML(G, false)}
+    <div class="panel"><p class="label">${t("gameSettings")}</p><div class="settings">${settings}</div></div>
+    <div class="startbar"><div class="status" id="startStatus"></div><button class="btn primary big" id="start">▶ ${t("startGame")}</button></div>
+  </div>`;
+}
+
+// Profil dans le salon (avatar, couleur, pseudo)
+function openProfile() {
+  const el = document.createElement("div");
+  el.className = "modal-back";
+  const mine = playerOf(pid);
+  const cur = { avatar: mine.avatar, ac: mine.ac || 0, name: mine.name };
+  const draw = () => {
+    el.innerHTML = `<div class="modal"><h3>${t("yourProfile")} <button class="x" data-close>✕</button></h3>
+      <div class="avatar-pick" style="margin-top:14px">${avHTML(cur, "lg")}<input class="input" id="pName" maxlength="16" value="${esc(cur.name)}"></div>
+      ${avatarEditor(cur)}<button class="btn primary big" data-save style="margin-top:16px">✓ OK</button></div>`;
+    el.querySelectorAll("[data-av]").forEach((b) => (b.onclick = () => { cur.name = el.querySelector("#pName").value; cur.avatar = b.dataset.av; draw(); }));
+    el.querySelectorAll("[data-ac]").forEach((b) => (b.onclick = () => { cur.name = el.querySelector("#pName").value; cur.ac = +b.dataset.ac; draw(); }));
+    el.querySelector("[data-close]").onclick = () => el.remove();
+    el.querySelector("[data-save]").onclick = () => {
+      cur.name = el.querySelector("#pName").value.trim() || cur.name;
+      Object.assign(me, { name: cur.name, avatar: cur.avatar, ac: cur.ac });
+      store.set("name", me.name); store.set("avatar", me.avatar); store.set("ac", me.ac);
+      socket.emit("profile", { name: me.name, avatar: me.avatar, ac: me.ac });
+      el.remove();
+    };
+  };
+  el.onclick = (e) => { if (e.target === el) el.remove(); };
+  draw();
+  document.body.appendChild(el);
 }
 
 // ---------- Morceaux communs ----------
-const timerHTML = () => `<div class="row" style="align-items:center"><div class="timer-bar" style="flex:1"><i id="tbar"></i></div><span class="timer-num" id="tnum"></span></div>`;
+const timerHTML = () => `<div class="timer" id="timer"><div class="timer-bar"><i id="tbar"></i></div><span class="timer-num" id="tnum"></span></div>`;
 const themeBadge = () => (S.theme && THEME_INFO[S.theme] ? ` · ${THEME_INFO[S.theme].ico} ${THEME_INFO[S.theme][lang]}` : "");
-const roundHTML = (word = "question") => `<div class="round">${t(word)} ${S.round} / ${S.total}${themeBadge()}</div>`;
+const roundHTML = (word = "question") => `<div class="hud"><div class="round"><span class="num">${GAMES[S.game].ico}</span>${t(word)} ${S.round} / ${S.total}${themeBadge()}</div></div>`;
 const questionHTML = () => `<div class="question">${esc(tr(S.question))}</div>${S.img ? `<img class="qimg" src="${esc(S.img)}" alt="">` : ""}`;
 const answerForm = (ph, numeric) => `<div id="answerZone"><form class="answer-form" id="ansForm">
-    <input class="input" id="ans" autocomplete="off" ${numeric ? 'inputmode="decimal"' : ""} placeholder="${ph}" maxlength="80">
+    <input class="input" id="ans" autocomplete="off" ${numeric ? 'inputmode="decimal"' : ""} placeholder="${ph}" maxlength="80" aria-label="${ph}">
     <button class="btn primary">${t("send")}</button></form></div>`;
-const sentHTML = (txt) => `<p class="sent">${t("sent")}${txt ? ` : <b>${esc(txt)}</b>` : ""}</p>`;
-const waitingHTML = () => `<p class="muted small" style="margin-top:14px" id="waiting"></p>`;
-const skipBtn = (label = "showAnswers") => (isHost() ? `<div class="actions"><button class="btn ghost" id="skip">${t(label)}</button></div>` : "");
-const nextBtn = () => (isHost() ? `<div class="actions"><button class="btn primary big" id="next" style="max-width:420px">${S.round >= S.total ? t("ranking") : t("next")}</button></div>`
-  : S.auto ? `<p class="muted" style="margin-top:10px">${t("autoNext")}</p>` : `<p class="muted" style="margin-top:10px">${t("hostChecking")}</p>`);
+const sentHTML = (txt) => `<p class="sent">✓ ${t("sent")}${txt ? ` : <b>${esc(txt)}</b>` : ""}</p>`;
+const waitingHTML = () => `<p class="muted small" style="margin-top:14px;font-weight:700" id="waiting"></p>`;
+const skipBtn = (label = "showAnswers") => (isHost() ? `<div class="actions"><button class="btn ghost small" id="skip">${t(label)} ⏭</button></div>` : "");
+const nextBtn = () => (isHost() ? `<div class="actions"><button class="btn primary big" id="next" style="max-width:420px">${S.round >= S.total ? "🏆 " + t("ranking") : t("next") + " ▸"}</button></div>`
+  : S.auto ? `<p class="muted" style="margin-top:10px">${t("autoNext")}</p>` : `<p class="muted" style="margin-top:10px">${t("hostChecking")} <span class="dots"><i></i><i></i><i></i></span></p>`);
 const gainsTag = (id) => (S.gains && S.gains[id] ? `<span class="pts">+${S.gains[id]}</span>` : `<span class="pts"></span>`);
 
 // ---------- Quiz libre / Éclair / Au plus près ----------
@@ -529,35 +713,68 @@ function finalHTML() {
   const ranked = [...S.players].sort((a, b) => b.score - a.score);
   if (S.solo) {
     const r = S.result;
-    return `<div class="stage"><h2 style="font-size:30px">${t("gameOver")}</h2>
-      <p class="muted" style="margin-top:14px">${t("yourScore")}</p><div class="score-big">${ranked[0] ? ranked[0].score : 0}</div>
+    return `<div class="stage" style="padding:20px 0">${avHTML(playerOf(pid), "xl")}<h2 class="final-title">${t("gameOver")}</h2>
+      <p class="muted" style="margin-top:14px;font-weight:800">${t("yourScore")}</p><div class="score-big">${ranked[0] ? ranked[0].score : 0}</div>
       <p class="big-msg">${r ? (r.rank ? `🏆 ${t("yourRank", { r: r.rank, t: themeName(r.theme) })}` : "") : t("rankSaving")}</p>
-      <div class="actions"><button class="btn primary" id="again">${t("again")}</button><button class="btn" id="seeRank">${t("seeRanking")}</button><button class="btn ghost" id="home">${t("home")}</button></div></div>`;
+      <div class="actions"><button class="btn primary" id="again">🔁 ${t("playAgain")}</button><button class="btn violet" id="seeRank">🏆 ${t("seeRanking")}</button><button class="btn ghost" id="home">${t("home")}</button></div></div>`;
   }
   const [a, b, c] = ranked;
-  const pod = (p, n) => (p ? `<div class="pod p${n}"><div class="av">${p.avatar}</div><div class="nm">${esc(p.name)}</div><div class="sc">${p.score} pts</div><div>${["🥇", "🥈", "🥉"][n - 1]}</div></div>` : "");
+  const top = a && a.score > 0 ? a : null;
+  const pod = (p, n) => (p ? `<div class="pod p${n}"><div class="who-top">${n === 1 ? `<span style="font-size:26px">👑</span>` : ""}${avHTML(p, n === 1 ? "xl" : "lg")}<div class="nm">${esc(p.name)}</div><div class="sc">${p.score} pts</div></div><div class="step">${n}</div></div>` : "");
   const btns = S.auto
-    ? `<div class="actions"><button class="btn primary" id="requeue">${t("playAgainOnline")}</button><button class="btn ghost" id="home">${t("home")}</button></div>`
-    : isHost() ? `<div class="actions"><button class="btn primary" id="again">${t("again")}</button><button class="btn" id="toLobby2">${t("changeSettings")}</button><button class="btn ghost" id="home">${t("mainMenu")}</button></div>`
-    : `<p class="muted">${t("hostCanRestart")}</p><div class="actions"><button class="btn ghost" id="home">${t("mainMenu")}</button></div>`;
+    ? `<div class="actions"><button class="btn primary" id="requeue">⚡ ${t("playAgainOnline")}</button><button class="btn ghost" id="home">${t("home")}</button></div>`
+    : isHost() ? `<div class="actions"><button class="btn primary" id="again">🔁 ${t("playAgain")}</button><button class="btn violet" id="toLobby2">🎮 ${t("changeGameBtn")}</button><button class="btn ghost" id="home">${t("mainMenu")}</button></div><p class="keep">${t("keepRoom")}</p>`
+    : `<p class="muted" style="font-weight:700">${t("hostCanRestart")}</p><div class="actions"><button class="btn ghost" id="home">${t("mainMenu")}</button></div>`;
   const mk = { no: "✗", almost: "≈", ok: "✓" };
   const recap = S.recap && S.recap.length ? `<details class="recap" open><summary class="label">${t("recap")} (${S.recap.length})</summary>${S.recap.map((r, i) => {
     const m = r.marks[pid], mine = r.answers[pid];
     return `<div class="recap-row"><span class="num">${i + 1}</span><div class="rq"><div>${THEME_INFO[r.t] ? THEME_INFO[r.t].ico + " " : ""}${esc(tr(r.q))}</div>
       <div class="ra">✅ <b>${esc(tr(r.a))}</b>${pid in r.answers ? ` · ${t("yourAnswer")} : <span class="mark ${m} on">${mk[m] || ""}</span> ${esc(mine) || "—"}` : ""}${r.comments[pid] ? ` · 💬 ${esc(r.comments[pid])}` : ""}</div></div></div>`;
   }).join("")}</details>` : "";
-  const full = `<p class="label" style="margin-top:8px">${t("finalRanking")}</p><ol class="ranking final">${ranked.map((p, i) => `<li class="${p.pid === pid ? "me" : ""}"><span class="pos">${i < 3 ? ["🥇", "🥈", "🥉"][i] : i + 1}</span><span class="av">${p.avatar}</span><span class="nm">${esc(p.name)}</span><b>${p.score} pts</b></li>`).join("")}</ol>`;
-  return `<div class="stage"><h2 style="font-size:34px">${t("gameOver")}</h2><div class="podium">${pod(b, 2)}${pod(a, 1)}${pod(c, 3)}</div>${full}${btns}${recap}</div>`;
+  const full = `<p class="label" style="margin-top:8px">${t("finalRanking")}</p><ol class="ranking final">${ranked.map((p, i) => `<li class="${p.pid === pid ? "me" : ""}" style="animation-delay:${1.1 + i * 0.06}s"><span class="pos">${i < 3 ? ["🥇", "🥈", "🥉"][i] : i + 1}</span>${avHTML(p, "sm")}<span class="nm">${esc(p.name)}</span><b>${p.score} pts</b></li>`).join("")}</ol>`;
+  const headline = top ? (top.pid === pid ? `🎉 ${t("youWin")}` : t("winnerIs", { n: esc(top.name) })) : "";
+  return `<div class="stage"><h2 class="final-title">${t("gameOver")}</h2>${headline ? `<p class="final-sub">${headline}</p>` : ""}
+    <div class="podium">${pod(b, 2)}${pod(a, 1)}${pod(c, 3)}</div>${full}${btns}${recap}</div>`;
+}
+
+// Confettis légers (canvas, ~3 s, s'arrête tout seul)
+function confetti() {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const old = $("#confetti"); if (old) old.remove();
+  const cv = document.createElement("canvas"); cv.id = "confetti"; document.body.appendChild(cv);
+  const ctx = cv.getContext("2d"), dpr = Math.min(2, devicePixelRatio || 1);
+  const W = (cv.width = innerWidth * dpr), H = (cv.height = innerHeight * dpr);
+  cv.style.width = innerWidth + "px"; cv.style.height = innerHeight + "px";
+  const cols = ["#7c5cff", "#22d3c5", "#3b82f6", "#ff6b6b", "#ffd34d", "#34d399", "#ec4899"];
+  const N = innerWidth < 600 ? 90 : 160;
+  const ps = Array.from({ length: N }, (_, i) => ({
+    x: W / 2 + (Math.random() - 0.5) * W * 0.3, y: H * 0.35, vx: (Math.random() - 0.5) * 22 * dpr, vy: (-Math.random() * 20 - 8) * dpr,
+    r: (4 + Math.random() * 6) * dpr, c: cols[i % cols.length], a: Math.random() * 6, va: (Math.random() - 0.5) * 0.4, delay: i < N / 2 ? 0 : 25,
+  }));
+  let f = 0;
+  (function tick() {
+    ctx.clearRect(0, 0, W, H);
+    for (const p of ps) {
+      if (f < p.delay) continue;
+      p.vy += 0.55 * dpr; p.vx *= 0.985; p.x += p.vx; p.y += p.vy; p.a += p.va;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a); ctx.fillStyle = p.c; ctx.globalAlpha = Math.max(0, 1 - f / 190);
+      ctx.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2); ctx.restore();
+    }
+    if (++f < 190) requestAnimationFrame(tick); else cv.remove();
+  })();
 }
 
 function readBac() { return S.categories.map((_, i) => { const el = $(`#bac${i}`); return el ? el.value : bacDraft[i] || ""; }); }
 
 function bindRoom() {
   const on = (sel, ev, fn) => { const el = $(sel); if (el) el[ev] = fn; };
-  on("#langSel", "onchange", (e) => setLang(e.target.value));
+  bindNav();
+  on("#readyBtn", "onclick", () => socket.emit("ready"));
+  on("#editMe", "onclick", openProfile);
+  on("#copyLink", "onclick", async () => { try { await navigator.clipboard.writeText(joinUrl(S.code)); toast(t("linkCopied")); } catch { toast(joinUrl(S.code)); } });
   on("#leave", "onclick", () => { if (!confirm(t("leaveQ"))) return; socket.emit("leave"); leaveLocal(); });
   on("#home", "onclick", () => { socket.emit("leave"); leaveLocal(); });
-  on("#requeue", "onclick", () => { socket.emit("leave"); store.del("room"); S = null; local = "queue"; screenKey = ""; render(); socket.emit("quick", { pid, name: me.name, avatar: me.avatar }); });
+  on("#requeue", "onclick", () => { socket.emit("leave"); store.del("room"); S = null; local = "queue"; screenKey = ""; render(); socket.emit("quick", profile()); });
   on("#seeRank", "onclick", () => { const th = S.settings.theme; socket.emit("leave"); store.del("room"); S = null; openRanking(th); });
   on("#toLobby", "onclick", () => confirm(t("backLobbyQ")) && socket.emit("lobby"));
   on("#toLobby2", "onclick", () => socket.emit("lobby"));
@@ -599,6 +816,7 @@ function bindRoom() {
       v = v.replace(",", ".").replace(/\s/g, "");
       if (!Number.isFinite(Number(v))) return toast(t("enterNumber"));
     }
+    Sound.play("send");
     act({ type: "answer", value: v }, (r) => {
       if (r && r.error) { myAnswer = null; screenKey = ""; render(); toast(t(r.error)); }
     });
@@ -650,38 +868,74 @@ const isTouch = () => matchMedia("(pointer: coarse)").matches;
 function updateLive() {
   if (!S) return;
   const list = $("#players");
+  const conn = S.players.filter((p) => p.connected);
   if (list) {
     const ranked = [...S.players].sort((a, b) => b.score - a.score);
     $("#nbPlayers").textContent = S.players.length;
-    list.innerHTML = ranked.map((p) => `
+    list.innerHTML = ranked.map((p, i) => `
       <div class="player ${p.connected ? "" : "off"} ${S.phase === "play" && (S.answered || []).includes(p.pid) ? "done" : ""}">
-        <span class="av">${p.avatar}</span><span class="nm">${esc(p.name)}${p.pid === pid ? ` (${t("you")})` : ""}</span>
-        ${p.pid === S.hostPid && !S.auto ? `<span class="tag">${t("host")}</span>` : ""}
+        ${S.phase !== "lobby" ? `<span class="rk">${i + 1}</span>` : ""}${avHTML(p, "sm")}<span class="nm">${esc(p.name)}${p.pid === pid ? ` (${t("you")})` : ""}</span>
+        ${p.pid === S.hostPid && !S.auto ? `<span class="tag host">${t("hostLbl")}</span>` : ""}
+        ${S.phase === "lobby" && p.ready && p.pid !== S.hostPid ? `<span class="tag ready">${t("readyTag")}</span>` : ""}
+        ${!p.connected ? `<span class="tag">${t("offlineTag")}</span>` : ""}
         ${["bac", "quiz"].includes(S.game) && (S.coval || []).includes(p.pid) ? `<span class="tag val">${t("validator")}</span>` : ""}
-        ${["bac", "quiz"].includes(S.game) && !S.auto && isHost() && p.pid !== pid && S.phase === "lobby" ? `<button class="x" data-coval="${p.pid}" title="${t("makeCoval")}">${(S.coval || []).includes(p.pid) ? "☑" : "☐"}</button>` : ""}
-        <span class="sc">${p.score}</span>
-        ${isHost() && p.pid !== pid ? `<button class="x" data-kick="${p.pid}">✕</button>` : ""}
+        ${["bac", "quiz"].includes(S.game) && !S.auto && isHost() && p.pid !== pid && S.phase === "lobby" ? `<button class="x" data-coval="${p.pid}" title="${t("makeCoval")}" aria-label="${t("makeCoval")}">${(S.coval || []).includes(p.pid) ? "☑" : "☐"}</button>` : ""}
+        ${S.phase !== "lobby" ? `<span class="sc ${lastScores[p.pid] !== undefined && p.score > lastScores[p.pid] ? "bump" : ""}">${p.score}</span>` : ""}
+        ${isHost() && p.pid !== pid ? `<button class="x" data-kick="${p.pid}" aria-label="kick">✕</button>` : ""}
       </div>`).join("");
     list.querySelectorAll("[data-coval]").forEach((b) => (b.onclick = () => socket.emit("coval", b.dataset.coval)));
     list.querySelectorAll("[data-kick]").forEach((b) => (b.onclick = () => confirm(t("kickQ")) && socket.emit("kick", b.dataset.kick)));
+    lastScores = Object.fromEntries(S.players.map((p) => [p.pid, p.score]));
+  }
+  // Lobby : foule de joueurs, statut « prêt », barre de lancement
+  const crowd = $("#crowd");
+  if (crowd) {
+    const slots = Math.max(0, (MIN_PLAYERS[S.game] || 2) - S.players.length);
+    crowd.innerHTML = S.players.map((p) => `<div class="bubble ${p.ready || p.pid === S.hostPid ? "ready" : ""} ${p.connected ? "" : "off"}" ${p.pid === pid && !isHost() ? 'data-edit-me="1" style="cursor:pointer"' : ""}>
+        ${p.pid === S.hostPid ? `<span class="crown">👑</span>` : ""}${avHTML(p)}<span class="bn">${esc(p.name)}</span>
+        <span class="st">${p.pid === S.hostPid ? t("hostLbl") : p.ready ? "✓ " + t("readyTag") : t("waitingTag")}</span></div>`).join("")
+      + Array.from({ length: slots }, () => `<div class="bubble empty"><span class="avt">+</span><span class="bn muted">…</span></div>`).join("");
+    crowd.querySelectorAll("[data-edit-me]").forEach((b) => (b.onclick = openProfile));
+  }
+  const st = $("#startStatus");
+  if (st) {
+    const others = conn.filter((p) => p.pid !== S.hostPid);
+    const ready = others.filter((p) => p.ready).length;
+    const min = MIN_PLAYERS[S.game] || 1;
+    if (isHost()) {
+      const okN = conn.length >= min;
+      st.innerHTML = `${t("hostStatus", { n: conn.length })}<small>${!okN ? t("needMore", { n: min }) : others.length && ready === others.length ? "✓ " + t("allReady") : t("readyCount", { r: ready, n: others.length })}</small>`;
+      const b = $("#start"); if (b) b.disabled = !okN;
+    } else {
+      const mine = S.players.find((p) => p.pid === pid);
+      st.innerHTML = `${t("waitStart")}<small>${t("readyCount", { r: ready, n: others.length })}</small>`;
+      const rb = $("#readyBtn");
+      if (rb) { rb.textContent = mine && mine.ready ? "↩ " + t("notReadyBtn") : "✓ " + t("readyBtn"); rb.className = "btn " + (mine && mine.ready ? "ghost" : "green"); }
+    }
   }
   const w = $("#waiting");
-  if (w && S.phase === "play") w.textContent = t("answered", { n: (S.answered || []).length, t: S.players.filter((p) => p.connected).length });
+  if (w && S.phase === "play") w.textContent = t("answered", { n: (S.answered || []).length, t: conn.length });
   if (S.phase === "play" && S.game === "bac" && S.stoppedBy) {
     const m = $("#stopMsg");
-    if (m) m.innerHTML = `<b style="color:var(--pink)">${t("stopped", { n: esc(S.stoppedBy) })} ${t("stop10")}</b>`;
+    if (m) m.innerHTML = `<b style="color:var(--coral)">${t("stopped", { n: esc(S.stoppedBy) })} ${t("stop10")}</b>`;
     const b = $("#stopBtn"); if (b) b.disabled = true;
   }
 }
 
+// Chronomètre animé (couleur + battement dans les 5 dernières secondes, tic-tac sonore)
+let lastSec = null;
 setInterval(() => {
   if (!S || S.phase !== "play" || !S.deadline) return;
-  const bar = $("#tbar"), num = $("#tnum");
+  const bar = $("#tbar"), num = $("#tnum"), box = $("#timer");
   if (!bar) return;
   const left = Math.max(0, S.deadline - (Date.now() + clockOffset));
   if (!bar.dataset.total || left > +bar.dataset.total) bar.dataset.total = left; // durée de l'étape en cours
-  bar.style.width = Math.min(100, (left / (+bar.dataset.total || 1)) * 100) + "%";
-  num.textContent = Math.ceil(left / 1000) + " s";
-}, 250);
+  const ratio = Math.min(1, left / (+bar.dataset.total || 1));
+  bar.style.width = ratio * 100 + "%";
+  const sec = Math.ceil(left / 1000);
+  num.textContent = sec + " s";
+  if (box) { box.classList.toggle("danger", sec <= 5 && left > 0); box.classList.toggle("warn", sec > 5 && ratio < 0.35); }
+  if (sec !== lastSec) { if (sec <= 5 && sec > 0 && !iDid()) Sound.play(sec <= 3 ? "tickUrgent" : "tick"); lastSec = sec; }
+}, 200);
 
 render();

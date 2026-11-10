@@ -44,7 +44,26 @@ const me = {
   avatar: store.get("avatar", AVATARS[Math.floor(Math.random() * AVATARS.length)]),
   ac: store.get("ac", Math.floor(Math.random() * AV_COLORS.length)),
 };
-const profile = () => ({ pid, name: me.name, avatar: me.avatar, ac: me.ac });
+me.xp = Math.max(0, +store.get("xp", 0) || 0);
+const profile = () => ({ pid, name: me.name, avatar: me.avatar, ac: me.ac, xp: me.xp });
+// Questions déjà vues sur ce téléphone (pour ne pas retomber sur les mêmes d'une partie à l'autre)
+let seenIds = store.get("seen", []);
+if (!Array.isArray(seenIds)) seenIds = [];
+const withSeen = (o) => ({ ...o, seen: seenIds });
+// Niveaux : il faut 60 XP pour passer niveau 2, puis 30 XP de plus à chaque niveau
+function levelInfo(xp) {
+  let lvl = 1, need = 60, rest = Math.max(0, xp | 0);
+  while (rest >= need) { rest -= need; lvl++; need = 60 + 30 * (lvl - 1); }
+  return { lvl, into: rest, need };
+}
+const lvlTitle = (lvl) => { const a = (T[lang] && T[lang].lvlTitles) || T.en.lvlTitles; return a[Math.min(a.length - 1, Math.floor((lvl - 1) / 5))]; };
+const lvlTag = (p) => (p && p.lvl ? `<span class="lvl-tag">${t("lvl", { n: p.lvl })}</span>` : "");
+function lvlCard(xp, opts = {}) {
+  const L = levelInfo(xp);
+  return `<div class="lvl-card ${opts.cls || ""}"><div class="lvl-row"><span class="lvl-badge">${L.lvl}</span><div class="lvl-txt"><b>${t("lvlLong", { n: L.lvl })} · ${lvlTitle(L.lvl)}</b><small>${t("nextLvl", { n: L.need - L.into, l: L.lvl + 1 })}</small></div></div>
+    <div class="lvl-bar"><i style="width:${Math.round((L.into / L.need) * 100)}%"></i></div></div>`;
+}
+let lastXpShown = null; // animation de gain d'XP (une seule fois par fin de partie)
 let S = null;              // dernier état reçu du serveur (null = hors salon)
 let local = "home";        // écran hors salon : home | solo | queue | ranking
 let clockOffset = 0;
@@ -63,18 +82,32 @@ let lastScores = {};       // pour animer les scores qui montent
 const socket = io({ auth: { pid } });
 socket.on("connect", () => {
   const code = store.get("room", null);
-  if (code) socket.emit("join", { code, ...profile() }, (r) => { if (r.error) { store.del("room"); S = null; screenKey = ""; render(); } });
+  if (code) socket.emit("join", withSeen({ code, ...profile() }), (r) => { if (r.error) { store.del("room"); S = null; screenKey = ""; render(); } });
 });
 socket.on("state", (v) => {
   clockOffset = v.now - Date.now();
   const prev = S;
   S = v;
   store.set("room", v.code);
+  if (v.phase === "final" && v.xp && v.xp.id && store.get("xpId", "") !== v.xp.id) {
+    store.set("xpId", v.xp.id);
+    me.xp = Math.max(me.xp, v.xp.after | 0);
+    store.set("xp", me.xp);
+    lastXpShown = v.xp.id + ":new";
+    if (v.xp.up > 0) setTimeout(() => Sound.play("rankUp"), 1800);
+  }
   try { soundFor(prev, v); } catch {}
   render();
 });
 socket.on("queueSize", (n) => { queueSize = n; const el = $("#queueSize"); if (el) el.textContent = t("inQueue", { n }); });
 socket.on("kicked", () => { leaveLocal(); toast(t("kicked")); });
+socket.on("seenAdd", (ids) => {
+  if (!Array.isArray(ids)) return;
+  const set = new Set(seenIds);
+  ids.forEach((id) => typeof id === "string" && set.add(id));
+  seenIds = [...set].slice(-5000);
+  store.set("seen", seenIds);
+});
 socket.on("collect", () => { if (S && S.game === "bac" && S.phase === "play") act({ type: "answer", value: readBac(), round: S.round }); });
 
 function toast(msg) {
@@ -296,6 +329,7 @@ function renderHome() {
           <button class="avatar-btn" id="avBtn" aria-label="${t("pickAvatar")}">${avHTML(me, "lg")}<span class="edit">✎</span></button>
           <input class="input" id="name" maxlength="16" placeholder="${t("namePh")}" value="${esc(me.name)}" autocomplete="nickname">
         </div>
+        ${lvlCard(me.xp)}
         ${avOpen ? avatarEditor(me) : ""}
         ${preCode ? `<p class="invite-note">🎟️ ${t("qrInvite", { c: esc(preCode.toUpperCase()) })}</p>` : ""}
         <p class="label" id="joinZone">${t("codeLbl")}</p>
@@ -336,7 +370,7 @@ function renderHome() {
     if (!needName()) return;
     const code = $("#code").value.trim().toUpperCase();
     if (code.length !== 4) { $("#code").focus(); return toast(t("code4")); }
-    socket.emit("join", { code, ...profile() }, (r) => {
+    socket.emit("join", withSeen({ code, ...profile() }), (r) => {
       if (r && r.error) return toast(t(r.error));
       if (location.search) history.replaceState(null, "", location.pathname);
     });
@@ -359,7 +393,7 @@ function renderHome() {
   $$("[data-cat-tab]").forEach((b) => (b.onclick = () => { homeCat = b.dataset.catTab; screenKey = ""; const y = scrollY; render(); scrollTo({ top: y }); }));
   const create = (game) => {
     if (!needName()) return;
-    socket.emit("create", { ...profile(), game }, (r) => r.error && toast(t(r.error)));
+    socket.emit("create", withSeen({ ...profile(), game }), (r) => r.error && toast(t(r.error)));
   };
   $$("[data-create]").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); create(b.dataset.create); }));
   $$("[data-card]").forEach((c) => (c.onclick = () => create(c.dataset.card)));
@@ -367,7 +401,7 @@ function renderHome() {
   $("#goQuick").onclick = () => {
     if (!needName()) return;
     local = "queue"; render();
-    socket.emit("quick", profile());
+    socket.emit("quick", withSeen(profile()));
   };
   $("#goRank").onclick = () => openRanking("_global");
   if (preCode && me.name) $("#joinBtn").focus(); else if (preCode) $("#name").focus();
@@ -388,7 +422,7 @@ function renderSolo() {
     <div class="actions"><button class="btn ghost" id="soloRank">${t("worldRanking")}</button></div>
     <button class="btn primary big" id="soloGo" style="margin-top:16px">${t("play")}</button>`);
   $$("[data-st]").forEach((b) => (b.onclick = () => { soloTheme = b.dataset.st; store.set("soloTheme", soloTheme); render(); }));
-  $("#soloGo").onclick = () => socket.emit("solo", { ...profile(), theme: soloTheme });
+  $("#soloGo").onclick = () => socket.emit("solo", withSeen({ ...profile(), theme: soloTheme }));
   $("#soloRank").onclick = () => openRanking(soloTheme === "random" ? "all" : soloTheme);
 }
 
@@ -732,6 +766,7 @@ function finalHTML() {
     return `<div class="stage" style="padding:20px 0">${avHTML(playerOf(pid), "xl")}<h2 class="final-title">${t("gameOver")}</h2>
       <p class="muted" style="margin-top:14px;font-weight:800">${t("yourScore")}</p><div class="score-big">${ranked[0] ? ranked[0].score : 0}</div>
       <p class="big-msg">${r ? (r.rank ? `🏆 ${t("yourRank", { r: r.rank, t: themeName(r.theme) })}` : "") : t("rankSaving")}</p>
+      ${xpBlock()}
       <div class="actions"><button class="btn primary" id="again">🔁 ${t("playAgain")}</button><button class="btn violet" id="seeRank">🏆 ${t("seeRanking")}</button><button class="btn ghost" id="home">${t("home")}</button></div></div>`;
   }
   const [a, b, c] = ranked;
@@ -747,10 +782,20 @@ function finalHTML() {
     return `<div class="recap-row"><span class="num">${i + 1}</span><div class="rq"><div>${THEME_INFO[r.t] ? THEME_INFO[r.t].ico + " " : ""}${esc(tr(r.q))}</div>
       <div class="ra">✅ <b>${esc(tr(r.a))}</b>${pid in r.answers ? ` · ${t("yourAnswer")} : <span class="mark ${m} on">${mk[m] || ""}</span> ${esc(mine) || "—"}` : ""}${r.comments[pid] ? ` · 💬 ${esc(r.comments[pid])}` : ""}</div></div></div>`;
   }).join("")}</details>` : "";
-  const full = `<p class="label" style="margin-top:8px">${t("finalRanking")}</p><ol class="ranking final">${ranked.map((p, i) => `<li class="${p.pid === pid ? "me" : ""}" style="animation-delay:${1.1 + i * 0.06}s"><span class="pos">${i < 3 ? ["🥇", "🥈", "🥉"][i] : i + 1}</span>${avHTML(p, "sm")}<span class="nm">${esc(p.name)}</span><b>${p.score} pts</b></li>`).join("")}</ol>`;
+  const full = `<p class="label" style="margin-top:8px">${t("finalRanking")}</p><ol class="ranking final">${ranked.map((p, i) => `<li class="${p.pid === pid ? "me" : ""}" style="animation-delay:${1.1 + i * 0.06}s"><span class="pos">${i < 3 ? ["🥇", "🥈", "🥉"][i] : i + 1}</span>${avHTML(p, "sm")}<span class="nm">${esc(p.name)}</span>${lvlTag(p)}<b>${p.score} pts</b></li>`).join("")}</ol>`;
   const headline = top ? (top.pid === pid ? `🎉 ${t("youWin")}` : t("winnerIs", { n: esc(top.name) })) : "";
   return `<div class="stage"><h2 class="final-title">${t("gameOver")}</h2>${headline ? `<p class="final-sub">${headline}</p>` : ""}
-    <div class="podium">${pod(b, 2)}${pod(a, 1)}${pod(c, 3)}</div>${full}${btns}${recap}</div>`;
+    <div class="podium">${pod(b, 2)}${pod(a, 1)}${pod(c, 3)}</div>${xpBlock()}${full}${btns}${recap}</div>`;
+}
+// Bloc « +XP » de fin de partie, avec la barre qui se remplit
+function xpBlock() {
+  const x = S && S.xp;
+  if (!x) return "";
+  const A = levelInfo(x.before), B = levelInfo(x.after);
+  const from = x.up > 0 ? 0 : Math.round((A.into / A.need) * 100), to = Math.round((B.into / B.need) * 100);
+  return `<div class="xp-end ${x.up > 0 ? "up" : ""}"><div class="xp-gain">${t("xpGain", { n: x.g })}</div>
+    <div class="lvl-row"><span class="lvl-badge">${B.lvl}</span><div class="lvl-txt"><b>${x.up > 0 ? "⭐ " + t("levelUp") + " " : ""}${t("lvlLong", { n: B.lvl })} · ${lvlTitle(B.lvl)}</b><small>${t("xpOf", { a: B.into, b: B.need })}</small></div></div>
+    <div class="lvl-bar"><i style="--from:${from}%;--to:${to}%"></i></div></div>`;
 }
 
 // Confettis légers (canvas, ~3 s, s'arrête tout seul)
@@ -790,7 +835,7 @@ function bindRoom() {
   on("#copyLink", "onclick", async () => { try { await navigator.clipboard.writeText(joinUrl(S.code)); toast(t("linkCopied")); } catch { toast(joinUrl(S.code)); } });
   on("#leave", "onclick", () => { if (!confirm(t("leaveQ"))) return; socket.emit("leave"); leaveLocal(); });
   on("#home", "onclick", () => { socket.emit("leave"); leaveLocal(); });
-  on("#requeue", "onclick", () => { socket.emit("leave"); store.del("room"); S = null; local = "queue"; screenKey = ""; render(); socket.emit("quick", profile()); });
+  on("#requeue", "onclick", () => { socket.emit("leave"); store.del("room"); S = null; local = "queue"; screenKey = ""; render(); socket.emit("quick", withSeen(profile())); });
   on("#seeRank", "onclick", () => { const th = S.settings.theme; socket.emit("leave"); store.del("room"); S = null; openRanking(th); });
   on("#toLobby", "onclick", () => confirm(t("backLobbyQ")) && socket.emit("lobby"));
   on("#toLobby2", "onclick", () => socket.emit("lobby"));
@@ -890,7 +935,7 @@ function updateLive() {
     $("#nbPlayers").textContent = S.players.length;
     list.innerHTML = ranked.map((p, i) => `
       <div class="player ${p.connected ? "" : "off"} ${S.phase === "play" && (S.answered || []).includes(p.pid) ? "done" : ""}">
-        ${S.phase !== "lobby" ? `<span class="rk">${i + 1}</span>` : ""}${avHTML(p, "sm")}<span class="nm">${esc(p.name)}${p.pid === pid ? ` (${t("you")})` : ""}</span>
+        ${S.phase !== "lobby" ? `<span class="rk">${i + 1}</span>` : ""}${avHTML(p, "sm")}<span class="nm">${esc(p.name)}${p.pid === pid ? ` (${t("you")})` : ""}</span>${lvlTag(p)}
         ${p.pid === S.hostPid && !S.auto ? `<span class="tag host">${t("hostLbl")}</span>` : ""}
         ${S.phase === "lobby" && p.ready && p.pid !== S.hostPid ? `<span class="tag ready">${t("readyTag")}</span>` : ""}
         ${!p.connected ? `<span class="tag">${t("offlineTag")}</span>` : ""}
@@ -908,7 +953,7 @@ function updateLive() {
   if (crowd) {
     const slots = Math.max(0, (MIN_PLAYERS[S.game] || 2) - S.players.length);
     crowd.innerHTML = S.players.map((p) => `<div class="bubble ${p.ready || p.pid === S.hostPid ? "ready" : ""} ${p.connected ? "" : "off"}" ${p.pid === pid && !isHost() ? 'data-edit-me="1" style="cursor:pointer"' : ""}>
-        ${p.pid === S.hostPid ? `<span class="crown">👑</span>` : ""}${avHTML(p)}<span class="bn">${esc(p.name)}</span>
+        ${p.pid === S.hostPid ? `<span class="crown">👑</span>` : ""}${avHTML(p)}<span class="bn">${esc(p.name)}</span>${lvlTag(p)}
         <span class="st">${p.pid === S.hostPid ? t("hostLbl") : p.ready ? "✓ " + t("readyTag") : t("waitingTag")}</span></div>`).join("")
       + Array.from({ length: slots }, () => `<div class="bubble empty"><span class="avt">+</span><span class="bn muted">…</span></div>`).join("");
     crowd.querySelectorAll("[data-edit-me]").forEach((b) => (b.onclick = openProfile));

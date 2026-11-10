@@ -47,3 +47,20 @@ Object.assign(T.es, {
   playAgain: "Jugar otra vez", changeGameBtn: "Cambiar de juego", keepRoom: "La sala sigue abierta: mismo código, mismos jugadores.", winnerIs: "¡{n} gana la partida!", youWin: "¡Has ganado!",
   timeLeft: "Tiempo restante", answersLbl: "Respuestas", scoresLbl: "Puntuaciones", leaderLbl: "En cabeza", leaveRoom: "Salir",
 });
+
+// ---------- Niveaux / XP ----------
+Object.assign(T.fr, {
+  lvl: "Niv. {n}", lvlLong: "Niveau {n}", xpOf: "{a} / {b} XP", xpGain: "+{n} XP", levelUp: "Niveau supérieur !", nextLvl: "Encore {n} XP pour le niveau {l}",
+  lvlTitles: ["Nouveau venu", "Joueur du dimanche", "Fêtard", "Animateur de soirée", "Cerveau", "Champion", "Pro du quiz", "Maître du jeu", "Légende"],
+  lvlHow: "Chaque partie jouée te rapporte de l'XP : plus tu joues et mieux tu joues, plus tu montes.",
+});
+Object.assign(T.en, {
+  lvl: "Lv. {n}", lvlLong: "Level {n}", xpOf: "{a} / {b} XP", xpGain: "+{n} XP", levelUp: "Level up!", nextLvl: "{n} XP to level {l}",
+  lvlTitles: ["Newcomer", "Sunday player", "Party animal", "Party host", "Big brain", "Champion", "Quiz pro", "Game master", "Legend"],
+  lvlHow: "Every game you play earns XP: the more (and the better) you play, the higher you climb.",
+});
+Object.assign(T.es, {
+  lvl: "Nv. {n}", lvlLong: "Nivel {n}", xpOf: "{a} / {b} XP", xpGain: "+{n} XP", levelUp: "¡Subes de nivel!", nextLvl: "Faltan {n} XP para el nivel {l}",
+  lvlTitles: ["Recién llegado", "Jugador de domingo", "Fiestero", "Animador de fiestas", "Cerebrito", "Campeón", "Pro del quiz", "Maestro del juego", "Leyenda"],
+  lvlHow: "Cada partida te da XP: cuanto más (y mejor) juegas, más subes.",
+});

@@ -38,19 +38,43 @@ const Sound = (() => {
     sfxBus.gain.setTargetAtTime(prefs.sfx ? prefs.sv * 0.6 : 0, now, 0.02);
   }
 
-  // Déverrouillage au premier geste de l'utilisateur
+  // Déverrouillage au premier geste de l'utilisateur.
+  // iOS : le contexte audio doit être relancé pendant un vrai geste (touchend / click),
+  // et le bouton « silencieux » coupe la Web Audio sauf si la page passe en mode « lecture ».
+  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  let keepAlive = null;
+  function silentWav() {
+    const n = 800, b = new ArrayBuffer(44 + n * 2), v = new DataView(b);
+    const w = (o, str) => { for (let i = 0; i < str.length; i++) v.setUint8(o + i, str.charCodeAt(i)); };
+    w(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); w(8, "WAVE"); w(12, "fmt "); v.setUint32(16, 16, true);
+    v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 8000, true); v.setUint32(28, 16000, true);
+    v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, "data"); v.setUint32(40, n * 2, true);
+    return URL.createObjectURL(new Blob([b], { type: "audio/wav" }));
+  }
+  function playbackMode() {
+    try { if (navigator.audioSession) { navigator.audioSession.type = "playback"; return; } } catch {}
+    if (!isIOS) return;
+    try {
+      if (!keepAlive) { keepAlive = new Audio(silentWav()); keepAlive.loop = true; keepAlive.setAttribute("playsinline", ""); keepAlive.volume = 0.01; }
+      keepAlive.play().catch(() => {});
+    } catch {}
+  }
   function unlock() {
     if (unlocked) return;
     if (!init()) return;
-    ctx.resume().then(() => {
-      unlocked = true;
-      if (wantedTrack) startTrack(wantedTrack);
-    }).catch(() => {});
+    playbackMode();
+    try { // un son vide joué pendant le geste « réveille » l'audio sur iOS
+      const src = ctx.createBufferSource(); src.buffer = ctx.createBuffer(1, 1, 22050); src.connect(ctx.destination); src.start(0);
+    } catch {}
+    const done = () => { if (unlocked) return; unlocked = true; if (wantedTrack) startTrack(wantedTrack); };
+    if (ctx.state === "running") done();
+    else ctx.resume().then(() => { if (ctx.state === "running") done(); }).catch(() => {});
   }
-  ["pointerdown", "keydown", "touchend"].forEach((ev) => window.addEventListener(ev, unlock, { capture: true, passive: true }));
+  ["pointerdown", "touchend", "click", "keydown"].forEach((ev) => window.addEventListener(ev, unlock, { capture: true, passive: true }));
   document.addEventListener("visibilitychange", () => {
     if (!ctx || !unlocked) return;
-    if (document.hidden) ctx.suspend().catch(() => {}); else ctx.resume().catch(() => {});
+    if (document.hidden) { ctx.suspend().catch(() => {}); if (keepAlive) keepAlive.pause(); }
+    else { ctx.resume().catch(() => {}); if (keepAlive) keepAlive.play().catch(() => {}); }
   });
 
   // ---------- Briques sonores ----------
@@ -110,6 +134,8 @@ const Sound = (() => {
   };
   const lastPlay = {};
   function play(name) {
+    if (!unlocked) unlock();
+    else if (ctx && ctx.state !== "running" && !document.hidden) ctx.resume().catch(() => {});
     if (!unlocked || !ctx || prefs.muted || !prefs.sfx || !SFX[name]) return;
     const now = performance.now();
     if (now - (lastPlay[name] || 0) < 90) return; // pas de doublon simultané

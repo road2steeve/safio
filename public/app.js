@@ -1,5 +1,5 @@
 // ======== Réglages faciles ========
-const APP_NAME = ["SAF", "IO"]; // le nom affiché (2e partie en dégradé)
+const APP_NAME = ["SAF", "IO", "Quizz"]; // le nom affiché (2e partie en dégradé) + la gamme SAFIO
 const AVATARS = ["🦊", "🐼", "🐸", "🐙", "🦁", "🐵", "🐧", "🦄", "🐯", "🐨", "🐷", "🐢", "🐳", "🦉", "🐝", "🦖", "👽", "🤖", "👻", "🎃", "😎", "🤠", "🥷", "🧙", "🌵", "🍕", "🍩", "🌈"];
 const GAMES = {
   quiz: { ico: "💡", color: "#3b82f6" },
@@ -88,10 +88,11 @@ const iDid = () => S && (S.answered || []).includes(pid);
 const joinUrl = (code) => `${location.origin}/?code=${code}`;
 const avColor = (i) => AV_COLORS[((i | 0) % AV_COLORS.length + AV_COLORS.length) % AV_COLORS.length];
 const avHTML = (p, cls = "") => `<span class="avt ${cls}" style="--c:${avColor(p.ac)}">${esc(p.avatar)}</span>`;
-const brandHTML = () => `<button class="brand" id="brand" aria-label="SAFIO">${LOGO_SVG}<h1>${APP_NAME[0]}<span>${APP_NAME[1]}</span></h1></button>`;
+const brandHTML = () => `<button class="brand" id="brand" aria-label="SAFIO Quizz">${LOGO_SVG}<h1><b class="nm">${APP_NAME[0]}<span>${APP_NAME[1]}</span></b><em class="line">${APP_NAME[2]}</em></h1></button>`;
 const playerOf = (id) => (S && S.players.find((p) => p.pid === id)) || { name: "?", avatar: "❔", ac: 0 };
 const who = (id) => { const p = playerOf(id); return `<span class="who-in">${avHTML(p, "xs")}${esc(p.name)}</span>`; };
 function leaveLocal() { store.del("room"); S = null; local = "home"; screenKey = ""; history.replaceState(null, "", "/"); render(); }
+let qrHandled = false;
 function needName() {
   const el = $("#name");
   if (el) { me.name = el.value.trim(); store.set("name", me.name); }
@@ -296,6 +297,7 @@ function renderHome() {
           <input class="input" id="name" maxlength="16" placeholder="${t("namePh")}" value="${esc(me.name)}" autocomplete="nickname">
         </div>
         ${avOpen ? avatarEditor(me) : ""}
+        ${preCode ? `<p class="invite-note">🎟️ ${t("qrInvite", { c: esc(preCode.toUpperCase()) })}</p>` : ""}
         <p class="label" id="joinZone">${t("codeLbl")}</p>
         <div class="row">
           <input class="input code-input" id="code" maxlength="4" placeholder="ABCD" value="${esc(preCode)}" autocomplete="off" autocapitalize="characters" inputmode="text">
@@ -324,7 +326,7 @@ function renderHome() {
       <button class="mode-tile" id="goRank"><b>${t("worldRanking")}</b><span>${t("nav_ranking")}</span></button>
     </div>
   </section>
-  <footer class="footer">SAFIO · ${t("noSignup")}</footer>`;
+  <footer class="footer">SAFIO Quizz · ${t("noSignup")}</footer>`;
   bindNav();
   $("#avBtn").onclick = () => { avOpen = !avOpen; screenKey = ""; render(); };
   $$("[data-av]").forEach((b) => (b.onclick = () => { me.avatar = b.dataset.av; store.set("avatar", me.avatar); screenKey = ""; render(); }));
@@ -334,10 +336,24 @@ function renderHome() {
     if (!needName()) return;
     const code = $("#code").value.trim().toUpperCase();
     if (code.length !== 4) { $("#code").focus(); return toast(t("code4")); }
-    socket.emit("join", { code, ...profile() }, (r) => r.error && toast(t(r.error)));
+    socket.emit("join", { code, ...profile() }, (r) => {
+      if (r && r.error) return toast(t(r.error));
+      if (location.search) history.replaceState(null, "", location.pathname);
+    });
   };
   $("#joinBtn").onclick = join;
-  $("#code").onkeydown = (e) => e.key === "Enter" && join();
+  // Arrivée par QR code / lien : on amène directement le joueur au formulaire
+  const qr = new URLSearchParams(location.search).get("code");
+  if (qr && !qrHandled) {
+    qrHandled = true;
+    setTimeout(() => {
+      const target = me.name ? $("#joinBtn") : $("#name");
+      if (!target) return;
+      $(".profile-card").scrollIntoView({ block: "center" });
+      if (!me.name) target.focus({ preventScroll: true });
+    }, 150);
+  }
+  $("#code").onkeydown = (e) => { if (e.key === "Enter") join(); };
   $("#ctaJoin").onclick = () => { const c = $("#code"); c.scrollIntoView({ block: "center", behavior: "smooth" }); c.focus(); };
   $("#ctaCreate").onclick = () => $("#games").scrollIntoView({ behavior: "smooth" });
   $$("[data-cat-tab]").forEach((b) => (b.onclick = () => { homeCat = b.dataset.catTab; screenKey = ""; const y = scrollY; render(); scrollTo({ top: y }); }));
@@ -805,7 +821,7 @@ function bindRoom() {
   }));
   const addCat = () => { const v = $("#newCat").value.trim(); if (v && !S.settings.categories.includes(v)) socket.emit("settings", { settings: { categories: [...S.settings.categories, v] } }); };
   on("#addCat", "onclick", addCat);
-  on("#newCat", "onkeydown", (e) => e.key === "Enter" && addCat());
+  on("#newCat", "onkeydown", (e) => { if (e.key === "Enter") addCat(); });
 
   // Réponses
   on("#ansForm", "onsubmit", (e) => {

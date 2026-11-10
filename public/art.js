@@ -7,7 +7,7 @@ const GAME_META = {
   mytho: { players: "2–30", mins: "15", tags: ["popular", "friends"], c1: "#8b5cf6", c2: "#ec4899" },
   bac: { players: "1–30", mins: "15", tags: ["popular", "friends"], c1: "#14b8a6", c2: "#3b82f6" },
   duel: { players: "2–30", mins: "3", tags: ["popular", "quick"], c1: "#f59e0b", c2: "#ef4444" },
-  brain: { players: "3–30", mins: "10", tags: ["new", "friends"], c1: "#ec4899", c2: "#f97316" },
+  brain: { players: "2–30", mins: "10", tags: ["new", "friends"], c1: "#ec4899", c2: "#f97316" },
   youre: { players: "3–30", mins: "10", tags: ["friends", "quick"], c1: "#f97316", c2: "#f43f5e" },
   closest: { players: "1–30", mins: "8", tags: ["new", "quick"], c1: "#eab308", c2: "#22c55e" },
   torpille: { players: "2–8", mins: "15", tags: ["new"], c1: "#0ea5e9", c2: "#6366f1" },

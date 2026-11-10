@@ -414,16 +414,25 @@ function localShell(title, body) {
   $("#back").onclick = () => { if (local === "queue") socket.emit("quickCancel"); local = "home"; render(); };
 }
 
-const themeGrid = (sel, attr) => `<div class="theme-grid">${Object.entries(THEME_INFO).map(([id, th]) => `<button class="theme ${sel === id ? "on" : ""} ${id === "random" || id === "all" ? "special" : ""}" ${attr}="${id}"><span>${th.ico}</span>${th[lang]}</button>`).join("")}</div>`;
+// Thèmes : "all", "random", ou un ou plusieurs thèmes séparés par des virgules
+const themeSel = (sel) => (sel === "all" || sel === "random" ? [sel] : String(sel || "all").split(",").filter(Boolean));
+const toggleTheme = (sel, id) => {
+  if (id === "all" || id === "random") return id;
+  const cur = themeSel(sel).filter((x) => x !== "all" && x !== "random");
+  const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
+  return next.length ? next.join(",") : "all";
+};
+const rankOf = (sel) => (sel === "random" || String(sel).includes(",") ? "all" : sel);
+const themeGrid = (sel, attr) => { const on = themeSel(sel); return `<div class="theme-grid">${Object.entries(THEME_INFO).map(([id, th]) => `<button class="theme ${on.includes(id) ? "on" : ""} ${id === "random" || id === "all" ? "special" : ""}" ${attr}="${id}"><span>${th.ico}</span>${th[lang]}</button>`).join("")}</div>`; };
 
 function renderSolo() {
   localShell(t("soloTitle"), `<p class="muted" style="margin:6px 0 16px">${t("soloHint")}</p>
     <h3 class="sub" style="margin-bottom:10px">${t("theme")}</h3>${themeGrid(soloTheme, "data-st")}
     <div class="actions"><button class="btn ghost" id="soloRank">${t("worldRanking")}</button></div>
     <button class="btn primary big" id="soloGo" style="margin-top:16px">${t("play")}</button>`);
-  $$("[data-st]").forEach((b) => (b.onclick = () => { soloTheme = b.dataset.st; store.set("soloTheme", soloTheme); render(); }));
+  $$("[data-st]").forEach((b) => (b.onclick = () => { soloTheme = toggleTheme(soloTheme, b.dataset.st); store.set("soloTheme", soloTheme); render(); }));
   $("#soloGo").onclick = () => socket.emit("solo", withSeen({ ...profile(), theme: soloTheme }));
-  $("#soloRank").onclick = () => openRanking(soloTheme === "random" ? "all" : soloTheme);
+  $("#soloRank").onclick = () => openRanking(rankOf(soloTheme));
 }
 
 function renderQueue() {
@@ -509,7 +518,7 @@ function lobbyHTML() {
     settings += `<div><h3 class="sub">${t("theme")} <span class="muted small">(${sel.length ? sel.length : t("allThemes")})</span></h3><p class="muted small" style="margin:4px 0 12px">${t("themesHint")}</p>
       <div class="theme-grid"><button class="theme special ${sel.length ? "" : "on"}" data-tm="all"><span>${THEME_INFO.all.ico}</span>${THEME_INFO.all[lang]}</button>${ids.map((id) => `<button class="theme ${sel.includes(id) ? "on" : ""}" data-tm="${id}"><span>${THEME_INFO[id].ico}</span>${THEME_INFO[id][lang]}</button>`).join("")}</div></div>`;
   }
-  if ("theme" in s) settings += `<div><h3 class="sub">${t("theme")}</h3><p class="muted small" style="margin:4px 0 12px">${t("themeHint")}</p>${themeGrid(s.theme, 'data-set="theme" data-val')}</div>`;
+  if ("theme" in s) settings += `<div><h3 class="sub">${t("theme")}</h3><p class="muted small" style="margin:4px 0 12px">${t("themeHint")}</p>${themeGrid(s.theme, "data-tg")}</div>`;
   const sl = [];
   if ("time" in s) sl.push(slider("time", G === "bac" ? t("timePerRound") : t("timePerQ"), G === "bac" ? 30 : G === "duel" ? 5 : 10, G === "bac" ? 300 : G === "duel" ? 60 : 120, 5, " s"));
   if ("count" in s) sl.push(slider("count", t(G === "torpille" ? "rounds" : "questions"), 3, G === "closest" ? 20 : 30, 1));
@@ -836,7 +845,7 @@ function bindRoom() {
   on("#leave", "onclick", () => { if (!confirm(t("leaveQ"))) return; socket.emit("leave"); leaveLocal(); });
   on("#home", "onclick", () => { socket.emit("leave"); leaveLocal(); });
   on("#requeue", "onclick", () => { socket.emit("leave"); store.del("room"); S = null; local = "queue"; screenKey = ""; render(); socket.emit("quick", withSeen(profile())); });
-  on("#seeRank", "onclick", () => { const th = S.settings.theme; socket.emit("leave"); store.del("room"); S = null; openRanking(th); });
+  on("#seeRank", "onclick", () => { const th = rankOf(S.settings.theme); socket.emit("leave"); store.del("room"); S = null; openRanking(th); });
   on("#toLobby", "onclick", () => confirm(t("backLobbyQ")) && socket.emit("lobby"));
   on("#toLobby2", "onclick", () => socket.emit("lobby"));
   const start = () => socket.emit("start", null, (r) => r && r.error && toast(t(r.error, { min: r.min })));
@@ -853,6 +862,7 @@ function bindRoom() {
 
   // Réglages (hôte)
   $$("[data-game]").forEach((b) => (b.onclick = () => socket.emit("settings", { game: b.dataset.game })));
+  $$("[data-tg]").forEach((b) => (b.onclick = () => socket.emit("settings", { settings: { theme: toggleTheme(S.settings.theme, b.dataset.tg) } })));
   $$("[data-set]").forEach((b) => (b.onclick = () => { const v = b.dataset.val; socket.emit("settings", { settings: { [b.dataset.set]: isNaN(+v) ? v : +v } }); }));
   $$("[data-range]").forEach((r) => {
     r.oninput = () => ($("#lbl-" + r.dataset.range).textContent = r.value + r.dataset.unit);

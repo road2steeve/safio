@@ -2,11 +2,20 @@
 const { THEMES, quiz, closest } = require("../data/questions");
 const { isMatch, clamp } = require("../lib/util");
 
+// theme : "all", "random", un thème, ou plusieurs thèmes séparés par des virgules ("geo,hist")
+const themeList = (t) => String(t || "").split(",").filter((x) => THEMES.includes(x));
 function quizPool(theme) {
-  const t = theme === "random" ? THEMES[Math.floor(Math.random() * THEMES.length)] : theme;
-  return { theme: t, pool: t === "all" ? quiz : quiz.filter((x) => x.t === t) };
+  if (theme === "random") theme = THEMES[Math.floor(Math.random() * THEMES.length)];
+  const list = themeList(theme);
+  if (!list.length) return { theme: "all", pool: quiz };
+  const pool = quiz.filter((x) => list.includes(x.t));
+  return { theme: list.length > 1 ? "mix" : list[0], pool: pool.length ? pool : quiz };
 }
-const cleanTheme = (t, d) => (["all", "random", ...THEMES].includes(t) ? t : d);
+const cleanTheme = (t, d) => {
+  if (t === "all" || t === "random") return t;
+  const list = [...new Set(themeList(t))];
+  return list.length ? list.join(",") : d;
+};
 const isValidator = (room, pid) => room.hostPid === pid || (room.coval || []).includes(pid);
 // Quiz libre : juste = 1 pt, presque = ½, faux = 0
 const MARK_PTS = { ok: 1, almost: 0.5, no: 0 };
@@ -29,7 +38,7 @@ function makeQA(kind) {
         if (!pool.length) pool = quiz;
       } else if (!isClosest) ({ pool, theme } = quizPool(room.settings.theme));
       const list = ctx.pickQuestions(room, pool, room.settings.count);
-      room.g = { list, index: -1, total: list.length, theme, answers: {}, times: {} };
+      room.g = { list, index: -1, total: list.length, theme, mix: theme === "mix", answers: {}, times: {} };
       room.recap = isQuiz ? [] : null;
       this.nextRound(room, ctx);
     },
@@ -39,7 +48,7 @@ function makeQA(kind) {
       if (g.index >= g.total) return ctx.finish(room);
       g.current = g.list[g.index];
       g.answers = {}; g.times = {}; g.judged = {}; g.gains = {}; g.marks = {}; g.comments = {}; g.checked = {};
-      if (isQuiz) g.theme = g.current.t;
+      if (isQuiz || g.mix) g.theme = g.current.t;
       g.startedAt = Date.now();
       ctx.play(room, room.settings.time, () => this.endRound(room, ctx));
     },
@@ -137,4 +146,4 @@ function makeQA(kind) {
   };
 }
 
-module.exports = { quiz: makeQA("quiz"), duel: makeQA("duel"), closest: makeQA("closest"), quizPool };
+module.exports = { quiz: makeQA("quiz"), duel: makeQA("duel"), closest: makeQA("closest"), quizPool, cleanTheme };

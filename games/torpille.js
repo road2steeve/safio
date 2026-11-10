@@ -1,7 +1,7 @@
 // Torpille : une question, puis des tirs sur la flotte adverse.
 // Bonne réponse = 3 tirs, mauvaise = 1 tir. +1 point par touche.
 // La première flotte entièrement coulée arrête la partie.
-const { quizPool } = require("./qa");
+const { quizPool, cleanTheme } = require("./qa");
 const { isMatch, clamp } = require("../lib/util");
 
 const SIZE = 6;
@@ -32,10 +32,9 @@ module.exports = {
   minPlayers: 2,
   defaults: { count: 15, time: 25, shootTime: 25, theme: "all" },
   clean(s, d) {
-    const { THEMES } = require("../data/questions");
     return {
       count: clamp(s.count, 3, 30, d.count), time: clamp(s.time, 10, 60, d.time), shootTime: clamp(s.shootTime, 10, 60, d.shootTime),
-      theme: ["all", "random", ...THEMES].includes(s.theme) ? s.theme : d.theme,
+      theme: cleanTheme(s.theme, d.theme),
     };
   },
   start(room, ctx) {
@@ -43,7 +42,7 @@ module.exports = {
     const list = ctx.pickQuestions(room, pool, room.settings.count);
     const boards = {};
     for (const pid of room.players.keys()) boards[pid] = placeFleet();
-    room.g = { list, index: -1, total: list.length, theme, boards, log: [] };
+    room.g = { list, index: -1, total: list.length, theme, mix: theme === "mix", boards, log: [] };
     this.nextRound(room, ctx);
   },
   alive(room) { return [...room.players.keys()].filter((pid) => room.g.boards[pid] && !fleetDown(room.g.boards[pid])); },
@@ -52,6 +51,7 @@ module.exports = {
     g.index++;
     if (g.index >= g.total || this.alive(room).length < 2 || Object.values(g.boards).some(fleetDown)) return ctx.finish(room);
     Object.assign(g, { current: g.list[g.index], step: "question", answers: {}, judged: {}, shotsLeft: {}, targets: {}, log: [], gains: {} });
+    if (g.mix) g.theme = g.current.t;
     ctx.play(room, room.settings.time, () => this.toShoot(room, ctx));
   },
   act(room, pid, d, ctx) {

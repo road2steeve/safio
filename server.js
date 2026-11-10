@@ -207,7 +207,8 @@ function nextStep(room) {
 async function submitSolo(room) {
   const p = [...room.players.values()][0];
   if (!p) return;
-  const theme = room.settings.theme;
+  // Plusieurs thèmes à la fois : le score compte dans le classement « Tous les thèmes »
+  const theme = String(room.settings.theme || "all").includes(",") ? "all" : room.settings.theme;
   try {
     await leaderboard.submit({ pid: p.pid, name: p.name, avatar: p.avatar, theme, score: p.score });
     const rows = await leaderboard.top(theme, "all");

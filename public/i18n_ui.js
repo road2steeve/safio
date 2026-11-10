@@ -2,7 +2,7 @@
 Object.assign(T.fr, {
   nav_games: "Jeux", nav_ranking: "Classement", nav_how: "Comment ça marche", createGame: "Créer une partie",
   heroKicker: "Party games sur téléphone", heroTitle: "La soirée commence ici.", heroSub: "Des jeux, des amis et des fous rires. Il ne manque que toi.",
-  ctaCreate: "Créer une partie", ctaJoin: "Rejoindre", yourProfile: "Ton profil", pickAvatar: "Choisis ton avatar", avColor: "Couleur", codeLbl: "Code de la partie",
+  ctaCreate: "Créer une partie", ctaJoin: "Rejoindre", yourProfile: "Ton profil", pickAvatar: "Choisis ton avatar", avColor: "Couleur", codeLbl: "Code de la partie", qrInvite: "Tu es invité·e dans la partie {c} ! Entre ton prénom puis touche Rejoindre.",
   noSignup: "Gratuit · Sans inscription · Jusqu'à 30 joueurs",
   cat_all: "Tous", cat_popular: "Populaires", cat_new: "Nouveautés", cat_quick: "Jeux rapides", cat_friends: "Entre amis",
   playersN: "{n} joueurs", minutes: "≈ {n} min", playBtn: "Jouer", gamesTitle: "Choisis ton jeu", gamesSub: "8 jeux originaux, en français, anglais et espagnol.",
@@ -18,7 +18,7 @@ Object.assign(T.fr, {
 Object.assign(T.en, {
   nav_games: "Games", nav_ranking: "Leaderboard", nav_how: "How it works", createGame: "Create a game",
   heroKicker: "Party games on your phone", heroTitle: "The party starts here.", heroSub: "Games, friends and big laughs. All that's missing is you.",
-  ctaCreate: "Create a game", ctaJoin: "Join", yourProfile: "Your profile", pickAvatar: "Pick your avatar", avColor: "Colour", codeLbl: "Game code",
+  ctaCreate: "Create a game", ctaJoin: "Join", yourProfile: "Your profile", pickAvatar: "Pick your avatar", avColor: "Colour", codeLbl: "Game code", qrInvite: "You're invited to game {c}! Enter your name, then tap Join.",
   noSignup: "Free · No sign-up · Up to 30 players",
   cat_all: "All", cat_popular: "Popular", cat_new: "New", cat_quick: "Quick games", cat_friends: "With friends",
   playersN: "{n} players", minutes: "≈ {n} min", playBtn: "Play", gamesTitle: "Pick your game", gamesSub: "8 original games, in English, French and Spanish.",
@@ -34,7 +34,7 @@ Object.assign(T.en, {
 Object.assign(T.es, {
   nav_games: "Juegos", nav_ranking: "Clasificación", nav_how: "Cómo funciona", createGame: "Crear partida",
   heroKicker: "Juegos de fiesta en el móvil", heroTitle: "La fiesta empieza aquí.", heroSub: "Juegos, amigos y muchas risas. Solo faltas tú.",
-  ctaCreate: "Crear partida", ctaJoin: "Unirse", yourProfile: "Tu perfil", pickAvatar: "Elige tu avatar", avColor: "Color", codeLbl: "Código de la partida",
+  ctaCreate: "Crear partida", ctaJoin: "Unirse", yourProfile: "Tu perfil", pickAvatar: "Elige tu avatar", avColor: "Color", codeLbl: "Código de la partida", qrInvite: "¡Te han invitado a la partida {c}! Escribe tu nombre y toca Unirse.",
   noSignup: "Gratis · Sin registro · Hasta 30 jugadores",
   cat_all: "Todos", cat_popular: "Populares", cat_new: "Novedades", cat_quick: "Juegos rápidos", cat_friends: "Entre amigos",
   playersN: "{n} jugadores", minutes: "≈ {n} min", playBtn: "Jugar", gamesTitle: "Elige tu juego", gamesSub: "8 juegos originales, en español, francés e inglés.",

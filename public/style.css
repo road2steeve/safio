@@ -504,3 +504,9 @@ span.mark { cursor: default; }
   .card { padding: 16px; border-radius: 22px; }
   .layout > section.card { padding: 16px 14px; }
 }
+.invite-note { margin: 16px 0 0; padding: 12px 14px; border-radius: 14px; background: rgba(34, 211, 197, .12); border: 1px solid rgba(34, 211, 197, .45); color: var(--text); font-weight: 700; line-height: 1.35; }
+.brand h1 { display: flex; align-items: center; gap: 8px; }
+.brand h1 .line { font-style: normal; font-size: .52em; letter-spacing: 1.5px; text-transform: uppercase; padding: 4px 8px 3px; border-radius: 8px; background: linear-gradient(90deg, var(--violet), var(--coral)); color: #fff; line-height: 1; }
+@media (max-width: 520px) { .brand h1 { gap: 6px; } .brand h1 .line { font-size: .5em; padding: 3px 6px 2px; letter-spacing: 1px; } }
+.brand h1 .nm { font-weight: inherit; }
+@media (max-width: 430px) { .nav:has(.room-pill) .brand h1 .line { display: none; } .room-pill .gi { display: none; } }

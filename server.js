@@ -373,4 +373,7 @@ setInterval(() => {
   }
 }, 60 * 1000);
 
-server.listen(PORT, () => console.log(`Serveur prêt sur http://localhost:${PORT}`));
+server.listen(PORT, () => {
+  console.log(`Serveur prêt sur http://localhost:${PORT}`);
+  console.log(`Classement mondial : ${process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN ? "Upstash (sauvegardé)" : "fichier local (effacé à chaque mise à jour)"}${process.env.LB_PREFIX ? " · préfixe " + process.env.LB_PREFIX : ""}`);
+});

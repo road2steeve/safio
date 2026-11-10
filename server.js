@@ -91,7 +91,8 @@ function giveXp(room) {
   room.xpId = Math.random().toString(36).slice(2, 10);
   room.xpGain = {};
   ranked.forEach((p, i) => {
-    let g = 20 + Math.round(Math.max(0, p.score) * 4);
+    const pts = room.solo ? p.score / 150 : p.score; // solo : ~150 points par bonne réponse
+    let g = 20 + Math.round(Math.max(0, pts) * 4);
     if (many && p.score > 0) g += [30, 18, 10][i] || 0;
     if (!p.connected) g = Math.round(g / 2);
     g = Math.min(250, g);

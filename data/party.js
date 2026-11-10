@@ -128,6 +128,7 @@ const WHO = [
   ["finir par vivre à la campagne avec des chèvres", "end up living in the countryside with goats", "acabar viviendo en el campo con cabras"],
 ];
 
+{ const m = require("./xl/party_more"); BLUFF.push(...m.BLUFF); SAME.push(...m.SAME); for (const w of m.WHO) if (!WHO.some((x) => x[0] === w[0])) WHO.push(w); }
 const bluff = BLUFF.map(([fr, en, es, ans, alts = []]) => {
   const show = Array.isArray(ans) ? { fr: ans[0], en: ans[1], es: ans[2] } : { fr: ans, en: ans, es: ans };
   return { q: { fr, en, es }, show, a: [...new Set([...Object.values(show), ...alts])] };
@@ -135,7 +136,7 @@ const bluff = BLUFF.map(([fr, en, es, ans, alts = []]) => {
 const same = SAME.map(([fr, en, es]) => ({ q: { fr, en, es } }));
 const who = WHO.map(([fr, en, es]) => ({
   q: {
-    fr: `Qui de nous est le plus susceptible de ${fr} ?`,
+    fr: `Qui de nous est le plus susceptible ${/^[aeiouyhéèêâîô]/i.test(fr) ? "d'" : "de "}${fr} ?`,
     en: `Who is most likely to ${en}?`,
     es: `¿Quién tiene más probabilidades de ${es}?`,
   },

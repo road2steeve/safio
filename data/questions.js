@@ -180,10 +180,14 @@ const Q = [
 ];
 
 Q.push(...more.Q);
+for (const f of ["q1", "q2", "q3", "q4", "q5", "q6"]) Q.push(...require("./xl/" + f));
+const xtra = require("./xl/extra");
+const seenFr = new Set();
+for (let i = Q.length - 1; i >= 0; i--) { const k = Q[i][1].toLowerCase().trim(); if (seenFr.has(k)) Q.splice(i, 1); else seenFr.add(k); }
 const quiz = [...Q.map(([t, fr, en, es, ans, alts = []]) => {
   const show = Array.isArray(ans) ? { fr: ans[0], en: ans[1], es: ans[2] } : { fr: ans, en: ans, es: ans };
   return { t, q: { fr, en, es }, show, a: [...new Set([...Object.values(show), ...alts])] };
-}), ...more.extra];
+}), ...more.extra, ...xtra.FLAGS, ...xtra.EMOJI];
 
 // Au plus près : [question FR, EN, ES, nombre, unité FR, EN, ES]
 const closest = [
@@ -208,6 +212,7 @@ const closest = [
   ["En quelle année a eu lieu la première Coupe du monde de football ?", "In which year was the first FIFA World Cup held?", "¿En qué año se jugó el primer Mundial de fútbol?", 1930],
   ["Combien de pattes a un mille-pattes de l'espèce record Eumillipes persephone (découverte en 2021) ?", "How many legs does the record millipede Eumillipes persephone (discovered 2021) have?", "¿Cuántas patas tiene el milpiés récord Eumillipes persephone (descubierto en 2021)?", 1306],
   ...more.CLOSEST,
+  ...xtra.CLOSEST,
 ].map(([fr, en, es, n, ufr = "", uen = "", ues = ""]) => ({ q: { fr, en, es }, n, u: { fr: ufr, en: uen, es: ues } }));
 
 module.exports = { THEMES, quiz, closest };

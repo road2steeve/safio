@@ -128,7 +128,7 @@ const WHO = [
   ["finir par vivre à la campagne avec des chèvres", "end up living in the countryside with goats", "acabar viviendo en el campo con cabras"],
 ];
 
-{ const m = require("./xl/party_more"); BLUFF.push(...m.BLUFF, ...require("./xl/bluff2"), ...require("./xl/bluff3"), ...require("./xl/bluff4")); SAME.push(...m.SAME); for (const w of m.WHO) if (!WHO.some((x) => x[0] === w[0])) WHO.push(w); }
+{ const m = require("./xl/party_more"); BLUFF.push(...m.BLUFF, ...require("./xl/bluff2"), ...require("./xl/bluff3"), ...require("./xl/bluff4")); SAME.push(...m.SAME); for (const w of [...m.WHO, ...require("./xl/who2"), ...require("./xl/who3")]) if (!WHO.some((x) => x[0] === w[0])) WHO.push(w); SAME.push(...require("./xl/same2")); }
 const { META, withMeta } = require("./questions");
 const bluff = BLUFF.map((line) => {
   const { row: [fr, en, es, ans, alts = []], meta } = META(line);

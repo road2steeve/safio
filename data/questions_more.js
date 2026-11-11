@@ -27,7 +27,7 @@ const Q = [
   ["geo", "Dans quelle ville se trouve la statue de la Liberté ?", "In which city is the Statue of Liberty?", "¿En qué ciudad está la Estatua de la Libertad?", ["New York", "New York", "Nueva York"], ["NYC", "New York City"]],
   ["geo", "Quel fleuve traverse Paris ?", "Which river flows through Paris?", "¿Qué río atraviesa París?", ["Seine", "Seine", "Sena"]],
   ["geo", "Dans quel pays se trouve le Kilimandjaro ?", "In which country is Mount Kilimanjaro?", "¿En qué país está el Kilimanjaro?", ["Tanzanie", "Tanzania", "Tanzania"]],
-  ["geo", "Dans quel pays se trouve la Grande Muraille ?", "In which country is the Great Wall?", "¿En qué país está la Gran Muralla?", "China", ["Chine"]],
+  ["geo", "Dans quel pays se trouve la Grande Muraille ?", "In which country is the Great Wall?", "¿En qué país está la Gran Muralla?", ["Chine", "China", "China"], ["Chine", "China"]],
   ["geo", "Quel océan sépare l'Europe de l'Amérique ?", "Which ocean separates Europe from the Americas?", "¿Qué océano separa Europa de América?", ["Atlantique", "Atlantic", "Atlántico"], ["Océan Atlantique", "Atlantic Ocean", "Océano Atlántico"]],
 
   // ---------- Histoire ----------

@@ -65,7 +65,6 @@ const WHO = [
   ["rire au mauvais moment", "laugh at the wrong moment", "reírse en el peor momento"],
   ["tomber amoureux en vacances", "fall in love on holiday", "enamorarse en vacaciones"],
   ["écrire un livre", "write a book", "escribir un libro"],
-  ["devenir président", "become president", "llegar a presidente"],
   ["oublier ses clés à l'intérieur", "lock their keys inside", "dejarse las llaves dentro"],
   ["regarder une série entière en une nuit", "binge a whole series in one night", "ver una serie entera en una noche"],
   ["avoir peur d'une araignée minuscule", "be scared of a tiny spider", "asustarse de una araña diminuta"],

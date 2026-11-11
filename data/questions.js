@@ -27,7 +27,7 @@ const Q = [
   ["geo", "Quelle est la capitale de la Nouvelle-Zélande ?", "What is the capital of New Zealand?", "¿Cuál es la capital de Nueva Zelanda?", "Wellington"],
   ["geo", "Quel est le plus grand océan du monde ?", "What is the largest ocean in the world?", "¿Cuál es el océano más grande del mundo?", ["Pacifique", "Pacific", "Pacífico"], ["Océan Pacifique", "Pacific Ocean", "Océano Pacífico"]],
   ["geo", "Quel est le plus grand pays du monde par sa superficie ?", "What is the largest country in the world by area?", "¿Cuál es el país más grande del mundo por superficie?", ["Russie", "Russia", "Rusia"]],
-  ["geo", "Quel est le pays le plus peuplé du monde depuis 2023 ?", "Which country has had the largest population since 2023?", "¿Cuál es el país más poblado del mundo desde 2023?", ["Inde", "India", "India"]],
+  ["geo", "Quel est le pays le plus peuplé du monde depuis 2023 ?", "Which country has had the largest population since 2023?", "¿Cuál es el país más poblado del mundo desde 2023?", ["Inde", "India", "India"], [], { checked: "2026-11", until: "2030-12-31" }],
   ["geo", "Quelle est la plus haute montagne du monde ?", "What is the highest mountain in the world?", "¿Cuál es la montaña más alta del mundo?", "Everest", ["Mont Everest", "Mount Everest", "Monte Everest"]],
   ["geo", "Dans quel pays se trouve le Machu Picchu ?", "In which country is Machu Picchu?", "¿En qué país está Machu Picchu?", ["Pérou", "Peru", "Perú"]],
   ["geo", "Quel est le plus petit pays du monde ?", "What is the smallest country in the world?", "¿Cuál es el país más pequeño del mundo?", ["Vatican", "Vatican City", "Vaticano"], ["Cité du Vatican", "Ciudad del Vaticano"]],
@@ -184,9 +184,22 @@ for (const f of ["q1", "q2", "q3", "q4", "q5", "q6"]) Q.push(...require("./xl/" 
 const xtra = require("./xl/extra");
 const seenFr = new Set();
 for (let i = Q.length - 1; i >= 0; i--) { const k = Q[i][1].toLowerCase().trim(); if (seenFr.has(k)) Q.splice(i, 1); else seenFr.add(k); }
-const quiz = [...Q.map(([t, fr, en, es, ans, alts = []]) => {
+// Infos facultatives en dernier élément d'une ligne : { d: 1|2|3 (facile|moyen|difficile),
+//   until: "AAAA-MM-JJ" (ne sort plus après cette date), checked: "AAAA-MM" (dernière vérification) }
+const META = (row) => {
+  const m = row[row.length - 1];
+  return m && typeof m === "object" && !Array.isArray(m) ? { row: row.slice(0, -1), meta: m } : { row, meta: {} };
+};
+const withMeta = (o, m) => {
+  if (m.d) o.d = m.d;
+  if (m.until) o.until = m.until;
+  if (m.checked) o.checked = m.checked;
+  return o;
+};
+const quiz = [...Q.map((line) => {
+  const { row: [t, fr, en, es, ans, alts = []], meta } = META(line);
   const show = Array.isArray(ans) ? { fr: ans[0], en: ans[1], es: ans[2] } : { fr: ans, en: ans, es: ans };
-  return { t, q: { fr, en, es }, show, a: [...new Set([...Object.values(show), ...alts])] };
+  return withMeta({ t, q: { fr, en, es }, show, a: [...new Set([...Object.values(show), ...alts])] }, meta);
 }), ...more.extra, ...xtra.FLAGS, ...xtra.EMOJI];
 
 // Au plus près : [question FR, EN, ES, nombre, unité FR, EN, ES]
@@ -213,6 +226,9 @@ const closest = [
   ["Combien de pattes a un mille-pattes de l'espèce record Eumillipes persephone (découverte en 2021) ?", "How many legs does the record millipede Eumillipes persephone (discovered 2021) have?", "¿Cuántas patas tiene el milpiés récord Eumillipes persephone (descubierto en 2021)?", 1306],
   ...more.CLOSEST,
   ...xtra.CLOSEST,
-].map(([fr, en, es, n, ufr = "", uen = "", ues = ""]) => ({ q: { fr, en, es }, n, u: { fr: ufr, en: uen, es: ues } }));
+].map((line) => {
+  const { row: [fr, en, es, n, ufr = "", uen = "", ues = ""], meta } = META(line);
+  return withMeta({ q: { fr, en, es }, n, u: { fr: ufr, en: uen, es: ues } }, meta);
+});
 
-module.exports = { THEMES, quiz, closest };
+module.exports = { THEMES, quiz, closest, META, withMeta };

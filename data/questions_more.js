@@ -48,7 +48,7 @@ const Q = [
   ["sport", "Dans quel sport parle-t-on de « strike » et de « spare » ?", "In which sport do you talk about a \"strike\" and a \"spare\"?", "¿En qué deporte se habla de «strike» y «spare»?", "Bowling", ["Bolos"]],
   ["sport", "Combien de trous compte un parcours de golf standard ?", "How many holes are on a standard golf course?", "¿Cuántos hoyos tiene un campo de golf estándar?", "18"],
   ["sport", "Dans quel pays sont nés les Jeux olympiques antiques ?", "In which country did the ancient Olympic Games begin?", "¿En qué país nacieron los Juegos Olímpicos de la Antigüedad?", ["Grèce", "Greece", "Grecia"]],
-  ["sport", "Quel pays a remporté le plus de Coupes du monde de football ?", "Which country has won the most FIFA World Cups?", "¿Qué país ha ganado más Mundiales de fútbol?", ["Brésil", "Brazil", "Brasil"]],
+  ["sport", "Quel pays avait remporté le plus de Coupes du monde de football avant l'édition 2026 ?", "Which country had won the most FIFA World Cups before the 2026 edition?", "¿Qué país había ganado más Mundiales de fútbol antes de la edición de 2026?", ["Brésil", "Brazil", "Brasil"]],
   ["sport", "Dans quel sport Michael Phelps est-il une légende ?", "In which sport is Michael Phelps a legend?", "¿En qué deporte es Michael Phelps una leyenda?", ["Natation", "Swimming", "Natación"]],
   ["sport", "Dans quelle équipe NBA Michael Jordan a-t-il remporté ses six titres ?", "With which NBA team did Michael Jordan win his six titles?", "¿Con qué equipo de la NBA ganó Michael Jordan sus seis títulos?", "Chicago Bulls", ["Bulls"]],
   ["sport", "Quel sport pratique-t-on au Tour de France ?", "Which sport is the Tour de France?", "¿Qué deporte es el Tour de Francia?", ["Cyclisme", "Cycling", "Ciclismo"], ["Vélo", "Bike", "Bicicleta"]],
@@ -164,7 +164,7 @@ const Q = [
   // ---------- Tech & internet ----------
   ["tech", "Qui a fondé Apple avec Steve Wozniak ?", "Who founded Apple with Steve Wozniak?", "¿Quién fundó Apple con Steve Wozniak?", "Steve Jobs", ["Jobs"]],
   ["tech", "Quelle entreprise a créé ChatGPT ?", "Which company created ChatGPT?", "¿Qué empresa creó ChatGPT?", "OpenAI"],
-  ["tech", "Quel réseau social de photos, créé en 2010, appartient aujourd'hui à Meta ?", "Which photo-sharing network, launched in 2010, is now owned by Meta?", "¿Qué red social de fotos, creada en 2010, pertenece hoy a Meta?", "Instagram", ["Insta"]],
+  ["tech", "Quel réseau social de photos, créé en 2010, appartient aujourd'hui à Meta ?", "Which photo-sharing network, launched in 2010, is now owned by Meta?", "¿Qué red social de fotos, creada en 2010, pertenece hoy a Meta?", "Instagram", ["Insta"], { checked: "2026-11", until: "2028-12-31" }],
   ["tech", "Quelle appli de vidéos courtes appartient à l'entreprise chinoise ByteDance ?", "Which short-video app is owned by the Chinese company ByteDance?", "¿Qué app de vídeos cortos pertenece a la empresa china ByteDance?", "TikTok"],
   ["tech", "Comment s'appelle l'assistant vocal d'Apple ?", "What is the name of Apple's voice assistant?", "¿Cómo se llama el asistente de voz de Apple?", "Siri"],
   ["tech", "Qui a fondé Amazon ?", "Who founded Amazon?", "¿Quién fundó Amazon?", "Jeff Bezos", ["Bezos"]],

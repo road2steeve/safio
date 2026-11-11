@@ -105,9 +105,10 @@ socket.on("queueSize", (n) => { queueSize = n; const el = $("#queueSize"); if (e
 socket.on("kicked", () => { leaveLocal(); toast(t("kicked")); });
 socket.on("seenAdd", (ids) => {
   if (!Array.isArray(ids)) return;
+  // Ordre chronologique : une question revue repasse à la fin (= vue récemment)
   const set = new Set(seenIds);
-  ids.forEach((id) => typeof id === "string" && set.add(id));
-  seenIds = [...set].slice(-5000);
+  ids.forEach((id) => { if (typeof id === "string") { set.delete(id); set.add(id); } });
+  seenIds = [...set].slice(-15000);
   store.set("seen", seenIds);
 });
 socket.on("collect", () => { if (S && S.game === "bac" && S.phase === "play") act({ type: "answer", value: readBac(), round: S.round }); });

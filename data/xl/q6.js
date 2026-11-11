@@ -63,7 +63,6 @@ module.exports = [
   ["heroes", "Quel méchant vert de Spider-Man vole sur un planeur ?", "Which green Spider-Man villain flies on a glider?", "¿Qué villano verde de Spider-Man vuela en un planeador?", ["Bouffon vert", "Green Goblin", "Duende Verde"], ["Le Bouffon vert", "Goblin"]],
 
   // ---------- Espace ----------
-  ["space", "Quelle est la planète la plus proche du Soleil ?", "Which planet is closest to the Sun?", "¿Qué planeta está más cerca del Sol?", ["Mercure", "Mercury", "Mercurio"]],
   ["space", "Sur quelle planète vivons-nous ?", "Which planet do we live on?", "¿En qué planeta vivimos?", ["Terre", "Earth", "Tierra"]],
   ["space", "Combien de lunes a la Terre ?", "How many moons does the Earth have?", "¿Cuántas lunas tiene la Tierra?", "1"],
   ["space", "Quel est le nom du premier satellite artificiel, lancé en 1957 ?", "What was the name of the first artificial satellite, launched in 1957?", "¿Cómo se llamaba el primer satélite artificial, lanzado en 1957?", ["Spoutnik", "Sputnik", "Sputnik"], ["Sputnik", "Spoutnik 1", "Sputnik 1"]],
@@ -76,7 +75,7 @@ module.exports = [
   ["space", "Comment appelle-t-on une « étoile filante » en astronomie ?", "What is a “shooting star” called in astronomy?", "¿Cómo se llama una «estrella fugaz» en astronomía?", ["Météore", "Meteor", "Meteoro"], ["Meteore", "Météorite", "Meteorite", "Meteorito"]],
   ["space", "Quel astronaute français a séjourné dans l'ISS en 2016-2017 et 2021 ?", "Which French astronaut stayed on the ISS in 2016–2017 and 2021?", "¿Qué astronauta francés estuvo en la ISS en 2016-2017 y 2021?", ["Thomas Pesquet", "Thomas Pesquet", "Thomas Pesquet"], ["Pesquet"]],
   ["space", "Quelle est la plus grande lune de Saturne ?", "What is Saturn's largest moon?", "¿Cuál es la luna más grande de Saturno?", ["Titan", "Titan", "Titán"]],
-  ["space", "Quel robot de la NASA explore Mars depuis 2021 avec un petit hélicoptère ?", "Which NASA rover has explored Mars since 2021 with a small helicopter?", "¿Qué rover de la NASA explora Marte desde 2021 con un pequeño helicóptero?", ["Perseverance", "Perseverance", "Perseverance"]],
+  ["space", "Quel robot de la NASA s'est posé sur Mars en 2021 avec un petit hélicoptère ?", "Which NASA rover landed on Mars in 2021 carrying a small helicopter?", "¿Qué rover de la NASA aterrizó en Marte en 2021 con un pequeño helicóptero?", ["Perseverance", "Perseverance", "Perseverance"]],
   ["space", "Quel est le nom de la galaxie spirale voisine de la Voie lactée ?", "What is the name of the neighbouring spiral galaxy to the Milky Way?", "¿Cómo se llama la galaxia espiral vecina de la Vía Láctea?", ["Andromède", "Andromeda", "Andrómeda"], ["Andromede", "Galaxie d'Andromède"]],
   ["space", "Quelle constellation ressemble à une casserole (en partie) dans le ciel du Nord ?", "Which star pattern looks like a saucepan or plough in the northern sky?", "¿Qué grupo de estrellas parece un cazo en el cielo del norte?", ["Grande Ourse", "Big Dipper", "Osa Mayor"], ["Grande Casserole", "Plough", "Ursa Major", "Great Bear"]],
   ["space", "Quelle étoile indique presque exactement le nord ?", "Which star shows almost exactly where north is?", "¿Qué estrella indica casi exactamente el norte?", ["Étoile polaire", "North Star", "Estrella Polar"], ["Polaris", "Etoile polaire"]],

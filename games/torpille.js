@@ -38,7 +38,7 @@ module.exports = {
     };
   },
   start(room, ctx) {
-    const { pool, theme } = quizPool(room.settings.theme);
+    const { pool, theme } = quizPool(room.settings.theme, room, ctx);
     const list = ctx.pickQuestions(room, pool, room.settings.count);
     const boards = {};
     for (const pid of room.players.keys()) boards[pid] = placeFleet();

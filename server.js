@@ -9,9 +9,9 @@ const bac = require("./games/bac");
 const party = require("./games/party");
 const torpille = require("./games/torpille");
 const { blindtest } = require("./games/blindtest");
+const { pick, pickTheme } = require("./lib/pick");
 const leaderboard = require("./lib/leaderboard");
 const { createTv } = require("./lib/tv");
-const { shuffle } = require("./lib/util");
 const { THEMES } = require("./data/questions");
 
 const GAMES = {
@@ -61,18 +61,26 @@ const cleanAc = (c) => (Number.isInteger(c) && c >= 0 && c < 10 ? c : 0); // cou
 // Niveau / XP (gardés sur le téléphone du joueur, renvoyés au serveur pour l'affichage)
 const cleanXp = (x) => (Number.isFinite(+x) ? Math.max(0, Math.min(1e7, Math.floor(+x))) : 0);
 // Questions déjà vues par ce téléphone (identifiants courts)
-const cleanSeen = (a) => (Array.isArray(a) ? a.filter((x) => typeof x === "string" && x.length <= 12).slice(-5000) : []);
+const SEEN_MAX = 15000;
+const cleanSeen = (a) => (Array.isArray(a) ? a.filter((x) => typeof x === "string" && x.length <= 12).slice(-SEEN_MAX) : []);
+// Mémoire des questions vues : identifiant -> ordre (plus grand = vue plus récemment)
+function addSeen(p, ids) {
+  if (!p.seen) { p.seen = new Map(); p.seenMax = 0; }
+  for (const id of ids) { p.seen.delete(id); p.seen.set(id, ++p.seenMax); }
+  while (p.seen.size > SEEN_MAX) p.seen.delete(p.seen.keys().next().value);
+}
 function levelOf(xp) {
   let lvl = 1, need = 60;
   while (xp >= need) { xp -= need; lvl++; need = 60 + 30 * (lvl - 1); }
   return lvl;
 }
 function addPlayer(r, { pid, name, avatar, ac, xp, seen }) {
-  if (!r.players.has(pid)) r.players.set(pid, { pid, name: cleanName(name), avatar: cleanAv(avatar), ac: cleanAc(ac), score: 0, ready: false, xp: cleanXp(xp), seen: new Set(cleanSeen(seen)) });
+  if (!r.players.has(pid)) r.players.set(pid, { pid, name: cleanName(name), avatar: cleanAv(avatar), ac: cleanAc(ac), score: 0, ready: false, xp: cleanXp(xp) });
+  if (!r.players.get(pid).seen) addSeen(r.players.get(pid), cleanSeen(seen));
   else {
     const p = r.players.get(pid);
     if (xp !== undefined) p.xp = Math.max(p.xp || 0, cleanXp(xp));
-    if (seen) for (const id of cleanSeen(seen)) p.seen.add(id);
+    if (seen) { const known = p.seen || new Map(); addSeen(p, cleanSeen(seen).filter((id) => !known.has(id))); }
   }
   return r.players.get(pid);
 }
@@ -176,24 +184,22 @@ const ctx = {
     if (room.solo) submitSolo(room);
     broadcast(room);
   },
-  // D'abord les questions que personne dans le salon n'a jamais vues (sur ce téléphone, même lors
-  // de parties précédentes), puis celles vues par le moins de joueurs, en évitant celles déjà posées ici.
+  // Sélection commune à tous les jeux (voir lib/pick.js) : inédites d'abord, puis les plus anciennes,
+  // thèmes et difficultés équilibrés, jamais deux questions sœurs, jamais une question déjà posée dans la salle.
   pickQuestions(room, pool, n) {
     room.seen = room.seen || new Set();
     const ps = [...room.players.values()].filter((p) => p.connected !== false);
-    const scored = shuffle(pool).map((x) => {
-      const id = qid(x);
-      let sc = room.seen.has(x) ? 1000 : 0;
-      for (const p of ps) if (p.seen && p.seen.has(id)) sc++;
-      return { x, id, sc };
-    });
-    scored.sort((a, b) => a.sc - b.sc);
-    const list = scored.slice(0, Math.min(n, scored.length));
+    const list = pick(pool, n, { players: ps, roomSeen: room.seen, qid });
     const ids = list.map((o) => o.id);
     for (const o of list) room.seen.add(o.x);
-    for (const p of room.players.values()) if (p.seen) ids.forEach((id) => p.seen.add(id));
+    for (const p of room.players.values()) addSeen(p, ids);
     io.to(room.code).emit("seenAdd", ids);
     return list.map((o) => o.x);
+  },
+  // Thème « au hasard » : un thème où il reste des questions inédites pour le groupe
+  pickTheme(room, themes, poolOf) {
+    const ps = [...room.players.values()].filter((p) => p.connected !== false);
+    return pickTheme(themes, poolOf, ps, qid);
   },
 };
 

@@ -4,8 +4,9 @@ const { isMatch, clamp } = require("../lib/util");
 
 // theme : "all", "random", un thème, ou plusieurs thèmes séparés par des virgules ("geo,hist")
 const themeList = (t) => String(t || "").split(",").filter((x) => THEMES.includes(x));
-function quizPool(theme) {
-  if (theme === "random") theme = THEMES[Math.floor(Math.random() * THEMES.length)];
+const byTheme = (t) => quiz.filter((x) => x.t === t);
+function quizPool(theme, room, ctx) {
+  if (theme === "random") theme = ctx && ctx.pickTheme ? ctx.pickTheme(room, THEMES, byTheme) : THEMES[Math.floor(Math.random() * THEMES.length)];
   const list = themeList(theme);
   if (!list.length) return { theme: "all", pool: quiz };
   const pool = quiz.filter((x) => list.includes(x.t));
@@ -36,7 +37,7 @@ function makeQA(kind) {
         const th = room.settings.themes || [];
         pool = th.length ? quiz.filter((x) => th.includes(x.t)) : quiz;
         if (!pool.length) pool = quiz;
-      } else if (!isClosest) ({ pool, theme } = quizPool(room.settings.theme));
+      } else if (!isClosest) ({ pool, theme } = quizPool(room.settings.theme, room, ctx));
       const list = ctx.pickQuestions(room, pool, room.settings.count);
       room.g = { list, index: -1, total: list.length, theme, mix: theme === "mix", answers: {}, times: {} };
       room.recap = isQuiz ? [] : null;

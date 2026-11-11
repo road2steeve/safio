@@ -35,7 +35,8 @@ const FLAGS = [
   ["sv", "Salvador", "El Salvador", "El Salvador"], ["ni", "Nicaragua", "Nicaragua", "Nicaragua"],
   ["do", "République dominicaine", "Dominican Republic", "República Dominicana"], ["ht", "Haïti", "Haiti", "Haití"],
   ["bs", "Bahamas", "Bahamas", "Bahamas"], ["tt", "Trinité-et-Tobago", "Trinidad and Tobago", "Trinidad y Tobago"], ["bb", "Barbade", "Barbados", "Barbados"],
-].map(([cc, fr, en, es, alts = []]) => ({
+].map((r) => [r[0], r[1], r[2], r[3], r[4] || [], null]).concat(require("./flags2")).map(([cc, fr, en, es, alts = [], d, m = {}]) => ({
+  ...(d ? { d } : {}), ...(m.checked ? { checked: m.checked } : {}),
   t: "flags",
   q: { fr: "Quel pays a ce drapeau ?", en: "Which country has this flag?", es: "¿De qué país es esta bandera?" },
   img: `/flags/${cc}.svg`,
@@ -78,14 +79,23 @@ const EMOJI = [
   ["🧑‍🚀🔴🥔", ["Seul sur Mars", "The Martian", "Marte"], ["Martian", "Misión rescate"]],
   ["🔵👽🌳", "Avatar"],
   ["🐜🦸‍♂️", "Ant-Man", ["Antman"]],
-].map(([emo, ans, alts = []]) => {
+];
+// Lot 5 : emojis en plus (séries comprises), sans les films déjà présents ailleurs
+{
+  const fr0 = (a) => (Array.isArray(a) ? a[0] : a).toLowerCase();
+  const seen = new Set([...EMOJI.map((r) => fr0(r[1])), ...require("../questions_more").extra.filter((x) => x.t === "emoji").map((x) => x.show.fr.toLowerCase())]);
+  for (const r of require("./emoji2")) if (r[3] !== "x" && !seen.has(fr0(r[1]))) { seen.add(fr0(r[1])); EMOJI.push(r); }
+}
+EMOJI.splice(0, EMOJI.length, ...EMOJI.map(([emo, ans, alts = [], kind]) => {
   const show = Array.isArray(ans) ? { fr: ans[0], en: ans[1], es: ans[2] } : { fr: ans, en: ans, es: ans };
   return {
     t: "emoji",
-    q: { fr: `Devine le film : ${emo}`, en: `Guess the movie: ${emo}`, es: `Adivina la película: ${emo}` },
+    q: kind === "s"
+      ? { fr: `Devine la série : ${emo}`, en: `Guess the TV series: ${emo}`, es: `Adivina la serie: ${emo}` }
+      : { fr: `Devine le film : ${emo}`, en: `Guess the movie: ${emo}`, es: `Adivina la película: ${emo}` },
     show, a: [...new Set([...Object.values(show), ...alts])],
   };
-});
+}));
 
 // CLOSEST : [FR, EN, ES, nombre, unité FR, EN, ES]
 const CLOSEST = [

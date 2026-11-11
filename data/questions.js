@@ -180,7 +180,7 @@ const Q = [
 ];
 
 Q.push(...more.Q);
-for (const f of ["q1", "q2", "q3", "q4", "q5", "q6"]) Q.push(...require("./xl/" + f));
+for (const f of ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9"]) Q.push(...require("./xl/" + f));
 const xtra = require("./xl/extra");
 const seenFr = new Set();
 for (let i = Q.length - 1; i >= 0; i--) { const k = Q[i][1].toLowerCase().trim(); if (seenFr.has(k)) Q.splice(i, 1); else seenFr.add(k); }

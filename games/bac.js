@@ -14,7 +14,8 @@ const POINTS = { ok: [2, 1], almost: [1, 0.5], no: [0, 0] };
 const CAT_IDS = ["country", "city", "firstname", "animal", "job", "fruitveg", "object", "sport", "brand", "celebrity", "movie", "body", "dish", "color", "cartoon", "instrument",
   "castle", "playground", "longword", "fragile", "pirate", "sky", "kitchen", "beach", "school", "party", "superhero", "song", "drink", "clothes", "toy", "vehicle",
   "insult", "excuse", "tinyThing", "bigThing", "smelly", "sticky", "inFridge", "inBag", "christmas", "halloween", "fear", "gift", "hobby", "wedding", "farm", "jungle",
-  "sea", "space", "bathroom", "videogame", "candy", "dessert", "flower", "tree", "bird", "insect", "mythology", "villain"];
+  "sea", "space", "bathroom", "videogame", "candy", "dessert", "flower", "tree", "bird", "insect", "mythology", "villain",
+  "capital", "river", "mountain", "language", "dog", "cheese", "pastry", "spice", "cocktail", "breakfast", "pizza", "singer", "band", "athlete", "writer", "painter", "historic", "fictional", "princess", "monster", "book", "app", "tvshow", "dance", "boardgame", "holiday", "monument", "shop", "furniture", "tool", "garden", "office", "camping", "accessory", "shoe", "hair", "makeup", "fish", "pet", "dinosaur", "weather", "feeling", "verb", "adjective", "noise", "red", "green", "round", "cold", "hot", "soft", "loud", "expensive", "pocket", "hospital", "city2", "winter", "summer", "sleepover", "desert", "lovename"];
 const STOP_DELAY = 10;
 const isValidator = (room, pid) => room.hostPid === pid || (room.coval || []).includes(pid);
 

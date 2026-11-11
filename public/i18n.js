@@ -31,7 +31,7 @@ const T = {
     bacRules: "10 pts par mot unique, 5 si quelqu'un a le même.", bacHost: "Touche un mot pour le refuser ou l'accepter.", bacGuest: "L'hôte peut refuser un mot douteux.",
     next: "Suite ▶", ranking: "Voir le classement 🏆", hostChecking: "L'hôte vérifie les réponses…",
     gameOver: "Fin de partie !", again: "🔁 Rejouer", changeGame: "🎮 Changer de jeu", hostCanRestart: "L'hôte peut relancer une partie.",
-    kicked: "L'hôte t'a retiré du salon.", err_nf: "Ce salon n'existe pas (ou plus).", err_full: "Salon complet.", err_game: "Jeu inconnu.", language: "Langue",
+    kicked: "L'hôte t'a retiré du salon.", err_auth: "Recharge la page pour continuer.", err_slow: "Trop de codes essayés. Attends une minute, puis réessaie.", err_banned: "L'hôte t'a retiré de ce salon.", err_nf: "Ce salon n'existe pas (ou plus).", err_full: "Salon complet.", err_game: "Jeu inconnu.", language: "Langue",
   },
   en: {
     tagline: "Party games where <b>your phone becomes the controller</b>. In the same room or on the other side of the world.",
@@ -62,7 +62,7 @@ const T = {
     bacRules: "10 pts for a unique word, 5 if someone has the same.", bacHost: "Tap a word to reject or accept it.", bacGuest: "The host can reject a dubious word.",
     next: "Next ▶", ranking: "See the ranking 🏆", hostChecking: "The host is checking the answers…",
     gameOver: "Game over!", again: "🔁 Play again", changeGame: "🎮 Change game", hostCanRestart: "The host can start a new game.",
-    kicked: "The host removed you from the room.", err_nf: "This room doesn't exist (anymore).", err_full: "Room is full.", err_game: "Unknown game.", language: "Language",
+    kicked: "The host removed you from the room.", err_auth: "Reload the page to continue.", err_slow: "Too many codes tried. Wait a minute, then try again.", err_banned: "The host removed you from this room.", err_nf: "This room doesn't exist (anymore).", err_full: "Room is full.", err_game: "Unknown game.", language: "Language",
   },
   es: {
     tagline: "Juegos de fiesta donde <b>tu móvil es el mando</b>. En la misma sala o en la otra punta del mundo.",
@@ -93,7 +93,7 @@ const T = {
     bacRules: "10 pts por palabra única, 5 si alguien tiene la misma.", bacHost: "Toca una palabra para rechazarla o aceptarla.", bacGuest: "El anfitrión puede rechazar una palabra dudosa.",
     next: "Siguiente ▶", ranking: "Ver la clasificación 🏆", hostChecking: "El anfitrión revisa las respuestas…",
     gameOver: "¡Fin de la partida!", again: "🔁 Otra vez", changeGame: "🎮 Cambiar de juego", hostCanRestart: "El anfitrión puede empezar otra partida.",
-    kicked: "El anfitrión te ha expulsado de la sala.", err_nf: "Esta sala no existe (o ya no existe).", err_full: "Sala llena.", err_game: "Juego desconocido.", language: "Idioma",
+    kicked: "El anfitrión te ha expulsado de la sala.", err_auth: "Recarga la página para continuar.", err_slow: "Demasiados códigos probados. Espera un minuto y vuelve a intentarlo.", err_banned: "El anfitrión te ha expulsado de esta sala.", err_nf: "Esta sala no existe (o ya no existe).", err_full: "Sala llena.", err_game: "Juego desconocido.", language: "Idioma",
   },
 };
 

@@ -9,6 +9,7 @@ const bac = require("./games/bac");
 const party = require("./games/party");
 const torpille = require("./games/torpille");
 const { blindtest } = require("./games/blindtest");
+const { filterText } = require("./lib/moderation");
 const { pick, pickTheme } = require("./lib/pick");
 const leaderboard = require("./lib/leaderboard");
 const { createTv } = require("./lib/tv");
@@ -55,7 +56,7 @@ function newRoom(game, hostPid, extra = {}) {
   rooms.set(r.code, r);
   return r;
 }
-const cleanName = (n) => String(n || "").trim().slice(0, 16) || "Player";
+const cleanName = (n) => filterText(String(n || "").trim().slice(0, 16)).trim() || "Player";
 const cleanAv = (a) => String(a || "🙂").slice(0, 4);
 const cleanAc = (c) => (Number.isInteger(c) && c >= 0 && c < 10 ? c : 0); // couleur de fond de l'avatar
 // Niveau / XP (gardés sur le téléphone du joueur, renvoyés au serveur pour l'affichage)
@@ -254,6 +255,37 @@ function tryMatch() {
   setTimeout(() => rooms.has(r.code) && startGame(r), 3000);
 }
 
+// ---------- Identité des téléphones ----------
+// Le « pid » d'un joueur est public (il circule dans la vue de tous) : il ne prouve donc rien.
+// Chaque téléphone garde aussi une clé secrète (« key ») ; le premier qui présente un pid fixe sa clé,
+// et plus personne ne peut ensuite se faire passer pour ce joueur (ni pour l'organisateur).
+const OWNERS_MAX = 200000;
+const owners = new Map(); // pid -> clé secrète
+function identify(pid, key) {
+  if (typeof pid !== "string" || !pid || pid.length > 40 || typeof key !== "string" || !/^[a-f0-9]{32,64}$/.test(key)) return null;
+  const k = owners.get(pid);
+  if (k !== undefined && k !== key) return null;
+  owners.delete(pid);
+  owners.set(pid, key);
+  if (owners.size > OWNERS_MAX) owners.delete(owners.keys().next().value);
+  return pid;
+}
+
+// Essais de code de salon : un humain se trompe parfois, un robot essaie des milliers de codes.
+const JOIN_WINDOW = 60 * 1000, JOIN_FAILS_IP = 30, JOIN_FAILS_SOCKET = 10;
+const joinFails = new Map(); // adresse -> { n, t }
+const ipOf = (socket) => {
+  const xff = String(socket.handshake.headers["x-forwarded-for"] || "").split(",").map((x) => x.trim()).filter(Boolean);
+  return xff.length ? xff[xff.length - 1] : socket.handshake.address;
+};
+const failsOf = (map, k, now) => { const f = map.get(k); return f && now - f.t < JOIN_WINDOW ? f.n : 0; };
+function noteFail(map, k, now) {
+  let f = map.get(k);
+  if (!f || now - f.t >= JOIN_WINDOW) f = { n: 0, t: now };
+  f.n++;
+  map.set(k, f);
+}
+
 // ---------- Connexions ----------
 function attach(socket, r, p) {
   socket.data.room = r;
@@ -268,9 +300,16 @@ io.on("connection", (socket) => {
   const R = () => socket.data.room;
   const ME = () => socket.data.me;
   const isHost = () => R() && ME() && R().hostPid === ME().pid;
+  const auth = socket.handshake.auth || {};
+  const myPid = identify(auth.pid, auth.key); // null : téléphone non reconnu (clé absente ou fausse)
+  if (auth.pid && !myPid) socket.emit("reauth");
+  const mine = (pid) => !!myPid && pid === myPid;
+  const ip = ipOf(socket);
+  const myFails = new Map();
   tv.bind(socket, { R, isHost, broadcast });
 
   socket.on("create", ({ pid, name, avatar, ac, game, xp, seen }, cb) => {
+    if (!mine(pid)) return cb && cb({ error: "err_auth" });
     if (!GAMES[game] || !pid) return cb && cb({ error: "err_game" });
     const r = newRoom(game, pid);
     attach(socket, r, addPlayer(r, { pid, name, avatar, ac, xp, seen }));
@@ -278,10 +317,18 @@ io.on("connection", (socket) => {
   });
 
   socket.on("join", ({ code, pid, name, avatar, ac, xp, seen }, cb) => {
+    if (!mine(pid)) return cb && cb({ error: "err_auth" });
+    const now = Date.now();
+    if (failsOf(joinFails, ip, now) >= JOIN_FAILS_IP || failsOf(myFails, "s", now) >= JOIN_FAILS_SOCKET) return cb && cb({ error: "err_slow" });
     const r = rooms.get(String(code || "").toUpperCase().trim());
-    if (!r || !pid) return cb && cb({ error: "err_nf" });
+    if (!r) {
+      noteFail(joinFails, ip, now);
+      noteFail(myFails, "s", now);
+      return cb && cb({ error: "err_nf" });
+    }
     if (!r.players.has(pid)) {
       if (r.solo || r.quick) return cb && cb({ error: "err_private" });
+      if (r.banned && r.banned.has(pid)) return cb && cb({ error: "err_banned" });
       if (r.players.size >= 30) return cb && cb({ error: "err_full" });
     }
     // Salle ouverte par une télé : le premier qui arrive devient l'organisateur
@@ -291,7 +338,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("solo", ({ pid, name, avatar, ac, theme, xp, seen }, cb) => {
-    if (!pid) return;
+    if (!mine(pid)) return cb && cb({ error: "err_auth" });
     const r = newRoom("duel", pid, { solo: true, auto: true });
     r.settings = cleanSettings("duel", { ...SOLO, theme: theme === "random" ? "all" : theme });
     attach(socket, r, addPlayer(r, { pid, name, avatar, ac, xp, seen }));
@@ -300,7 +347,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("quick", ({ pid, name, avatar, ac, xp, seen }) => {
-    if (!pid || queue.some((q) => q.pid === pid)) return;
+    if (!mine(pid) || queue.some((q) => q.pid === pid)) return;
     queue.push({ socket, pid, name, avatar, ac, xp, seen });
     tryMatch();
   });
@@ -313,8 +360,8 @@ io.on("connection", (socket) => {
     try {
       const t = ["_global", ...THEMES, "all"].includes(theme) ? theme : "_global";
       const rows = await leaderboard.top(t, period === "week" ? "week" : "all");
-      const pid = socket.handshake.auth && socket.handshake.auth.pid;
-      cb(rows.map(({ pid: id, name, avatar, score }) => ({ name, avatar, score, me: id === pid })));
+      const pid = myPid;
+      cb(rows.map(({ pid: id, name, avatar, score }) => ({ name: filterText(String(name || "")), avatar, score, me: id === pid })));
     } catch {
       cb([]);
     }
@@ -399,7 +446,13 @@ io.on("connection", (socket) => {
     const p = room.players.get(pid);
     if (!p) return;
     room.players.delete(pid);
-    if (p.socketId) io.to(p.socketId).emit("kicked");
+    (room.banned ||= new Set()).add(pid); // retiré par l'hôte : il ne peut pas revenir dans ce salon
+    const ks = p.socketId && io.sockets.sockets.get(p.socketId);
+    if (ks) {
+      ks.emit("kicked");
+      ks.leave(room.code);
+      if (ks.data.room === room) ks.data.room = ks.data.me = null;
+    }
     broadcast(room);
   });
 
@@ -442,6 +495,7 @@ function handleHostGone(room, force) {
 // Ménage : salons vides depuis 30 min
 setInterval(() => {
   const now = Date.now();
+  for (const [k, f] of joinFails) if (now - f.t >= JOIN_WINDOW) joinFails.delete(k);
   for (const [code, r] of rooms) {
     if (connected(r).length || tv.keepAlive(r, now)) r.lastActive = now;
     else if (now - (r.lastActive || now) > 30 * 60 * 1000 || r.players.size === 0) dropRoom(r);

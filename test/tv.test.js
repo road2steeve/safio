@@ -20,7 +20,8 @@ before(async () => {
 after(() => { sockets.forEach((s) => s.close()); srv.kill(); });
 
 function client(pid) {
-  const s = io(URL, { transports: ["websocket"], auth: { pid }, forceNew: true });
+  const key = require("crypto").createHash("sha256").update("k" + pid).digest("hex");
+  const s = io(URL, { transports: ["websocket"], auth: { pid, key }, forceNew: true });
   sockets.push(s);
   s.last = null;
   s.on("state", (v) => (s.last = v));

@@ -38,8 +38,12 @@ const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 const app = $("#app");
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+// pid : identifiant public du joueur ; key : clé secrète du téléphone (ne quitte jamais ce téléphone, sauf vers le serveur)
+const newKey = () => { const a = new Uint8Array(16); crypto.getRandomValues(a); return Array.from(a, (b) => b.toString(16).padStart(2, "0")).join(""); };
 let pid = store.get("pid", null);
+let key = store.get("key", null);
 if (!pid) { pid = Math.random().toString(36).slice(2) + Date.now().toString(36); store.set("pid", pid); }
+if (!key || !/^[a-f0-9]{32,64}$/.test(key)) { key = newKey(); store.set("key", key); }
 const me = {
   name: store.get("name", ""),
   avatar: store.get("avatar", AVATARS[Math.floor(Math.random() * AVATARS.length)]),
@@ -80,7 +84,16 @@ let homeCat = "all";       // filtre des jeux sur l'accueil
 let avOpen = false;        // panneau avatar ouvert sur l'accueil
 let lastScores = {};       // pour animer les scores qui montent
 
-const socket = io({ auth: { pid } });
+const socket = io({ auth: { pid, key } });
+// Le serveur ne reconnaît pas ce téléphone (identifiant déjà pris par un autre) : on repart avec une identité neuve
+socket.on("reauth", () => {
+  pid = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  key = newKey();
+  store.set("pid", pid);
+  store.set("key", key);
+  socket.auth = { pid, key };
+  socket.disconnect().connect();
+});
 socket.on("connect", () => {
   const code = store.get("room", null);
   if (code) socket.emit("join", withSeen({ code, ...profile() }), (r) => { if (r.error) { store.del("room"); S = null; screenKey = ""; render(); } });

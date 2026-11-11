@@ -39,7 +39,7 @@ test("aucune répétition tant que la banque n'est pas épuisée (nouvelles sall
 });
 
 test("une fois tout vu, les questions vues il y a le plus longtemps reviennent d'abord", () => {
-  const pool = party.bluff;
+  const pool = party.bluff.slice(0, 100); // 10 parties pile pour tout voir une fois
   const p = player();
   const first = play(pool, 10, 1, [p])[0];
   play(pool, 10, Math.ceil(pool.length / 10) - 1, [p]); // tout le reste

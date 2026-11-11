@@ -71,7 +71,7 @@ function makeQA(kind) {
         // 3 / 2 / 1 points aux plus proches (+2 si pile juste)
         const target = g.current.n;
         const entries = Object.entries(g.answers)
-          .map(([pid, v]) => ({ pid, d: Math.abs(Number(v) - target) }))
+          .map(([pid, v]) => ({ pid, d: Math.abs(Number(String(v).replace(/[\s\u00a0]/g, "").replace(",", ".")) - target) })) // « 9,58 » et « 5 840 » acceptés
           .filter((e) => Number.isFinite(e.d))
           .sort((a, b) => a.d - b.d);
         const distinct = [...new Set(entries.map((e) => e.d))];

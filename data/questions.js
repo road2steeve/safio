@@ -226,6 +226,8 @@ const closest = [
   ["Combien de pattes a un mille-pattes de l'espèce record Eumillipes persephone (découverte en 2021) ?", "How many legs does the record millipede Eumillipes persephone (discovered 2021) have?", "¿Cuántas patas tiene el milpiés récord Eumillipes persephone (descubierto en 2021)?", 1306],
   ...more.CLOSEST,
   ...xtra.CLOSEST,
+  ...require("./xl/closest2"),
+  ...require("./xl/closest3"),
 ].map((line) => {
   const { row: [fr, en, es, n, ufr = "", uen = "", ues = ""], meta } = META(line);
   return withMeta({ q: { fr, en, es }, n, u: { fr: ufr, en: uen, es: ues } }, meta);

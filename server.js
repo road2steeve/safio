@@ -8,6 +8,7 @@ const qa = require("./games/qa");
 const bac = require("./games/bac");
 const party = require("./games/party");
 const torpille = require("./games/torpille");
+const { blindtest } = require("./games/blindtest");
 const leaderboard = require("./lib/leaderboard");
 const { createTv } = require("./lib/tv");
 const { shuffle } = require("./lib/util");
@@ -15,7 +16,7 @@ const { THEMES } = require("./data/questions");
 
 const GAMES = {
   quiz: qa.quiz, mytho: party.mytho, bac, duel: qa.duel,
-  brain: party.brain, youre: party.youre, closest: qa.closest, torpille,
+  brain: party.brain, youre: party.youre, closest: qa.closest, torpille, blindtest,
 };
 
 const PORT = process.env.PORT || 3000;

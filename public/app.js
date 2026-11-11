@@ -10,8 +10,9 @@ const GAMES = {
   youre: { ico: "👉", color: "#f97316" },
   closest: { ico: "🎯", color: "#eab308" },
   torpille: { ico: "🚢", color: "#0ea5e9" },
+  blindtest: { ico: "🎵", color: "#d946ef" },
 };
-const MIN_PLAYERS = { mytho: 2, brain: 2, youre: 3, torpille: 2 };
+const MIN_PLAYERS = { mytho: 2, brain: 2, youre: 3, torpille: 2, blindtest: 2 };
 // Ambiance musicale selon le type de jeu
 const GAME_MUSIC = { quiz: "play", bac: "calm", duel: "fast", closest: "fast", mytho: "calm", brain: "calm", youre: "calm", torpille: "play" };
 
@@ -171,6 +172,7 @@ function musicFor() {
   if (!S) return Sound.music(local === "queue" ? "lobby" : "home");
   if (S.phase === "lobby" || S.phase === "starting") return Sound.music("lobby");
   if (S.phase === "final") return Sound.music("calm");
+  if (S.game === "blindtest") return Sound.music(null); // le Blind Test : silence, c'est la musique du DJ qu'on écoute
   Sound.music(GAME_MUSIC[S.game] || "play");
 }
 
@@ -184,6 +186,7 @@ function render() {
     dyn = [g.step, iDid()].join(",");
     if (g.game === "mytho") dyn += "," + g.myVote;
     if (g.game === "duel") dyn += "," + g.myOk;
+    if (g.game === "blindtest") dyn += JSON.stringify([g.bt, g.mine, !!g.cue]);
     if (g.game === "torpille" && g.step === "shoot") dyn += JSON.stringify([g.boards, g.target, g.shotsLeft]);
   }
   if (g.phase === "lobby") dyn = isHost() ? "h" : "p";
@@ -217,6 +220,7 @@ function mainHTML() {
   const fn = {
     quiz: [qaPlay, quizReview], duel: [qaPlay, quizReview], closest: [qaPlay, closestReview], bac: [bacPlay, bacReview],
     mytho: [mythoPlay, mythoReview], brain: [brainPlay, brainReview], youre: [yourePlay, youreReview], torpille: [torpPlay, torpReview],
+    blindtest: [btPlay, btReview],
   }[S.game];
   return S.phase === "play" ? fn[0]() : fn[1]();
 }
@@ -565,18 +569,21 @@ function lobbyHTML() {
       <div class="startbar"><div class="status" id="startStatus"></div><button class="btn green" id="readyBtn"></button></div></div>`;
   }
   let settings = "";
-  if ("themes" in s) {
+  if (G === "blindtest") settings = btLobby();
+  else if ("themes" in s) {
     const sel = s.themes || [];
     const ids = Object.keys(THEME_INFO).filter((id) => id !== "random" && id !== "all");
     settings += `<div><h3 class="sub">${t("theme")} <span class="muted small">(${sel.length ? sel.length : t("allThemes")})</span></h3><p class="muted small" style="margin:4px 0 12px">${t("themesHint")}</p>
       <div class="theme-grid"><button class="theme special ${sel.length ? "" : "on"}" data-tm="all"><span>${THEME_INFO.all.ico}</span>${THEME_INFO.all[lang]}</button>${ids.map((id) => `<button class="theme ${sel.includes(id) ? "on" : ""}" data-tm="${id}"><span>${THEME_INFO[id].ico}</span>${THEME_INFO[id][lang]}</button>`).join("")}</div></div>`;
   }
-  if ("theme" in s) settings += `<div><h3 class="sub">${t("theme")}</h3><p class="muted small" style="margin:4px 0 12px">${t("themeHint")}</p>${themeGrid(s.theme, "data-tg")}</div>`;
+  if (G === "blindtest") settings += "";
+  else if ("theme" in s) settings += `<div><h3 class="sub">${t("theme")}</h3><p class="muted small" style="margin:4px 0 12px">${t("themeHint")}</p>${themeGrid(s.theme, "data-tg")}</div>`;
   const sl = [];
-  if ("time" in s) sl.push(slider("time", G === "bac" ? t("timePerRound") : t("timePerQ"), G === "bac" ? 30 : G === "duel" ? 5 : 10, G === "bac" ? 300 : G === "duel" ? 60 : 120, 5, " s"));
-  if ("count" in s) sl.push(slider("count", t(G === "torpille" ? "rounds" : "questions"), 3, G === "closest" ? 20 : 30, 1));
+  if (G === "blindtest") sl.length = 0;
+  else if ("time" in s) sl.push(slider("time", G === "bac" ? t("timePerRound") : t("timePerQ"), G === "bac" ? 30 : G === "duel" ? 5 : 10, G === "bac" ? 300 : G === "duel" ? 60 : 120, 5, " s"));
+  if ("count" in s && G !== "blindtest") sl.push(slider("count", t(G === "torpille" ? "rounds" : "questions"), 3, G === "closest" ? 20 : 30, 1));
   if ("rounds" in s) sl.push(slider("rounds", t("rounds"), 1, 10, 1));
-  settings += `<div class="sliders">${sl.join("")}</div>`;
+  if (sl.length) settings += `<div class="sliders">${sl.join("")}</div>`;
   if (G === "bac") settings += `<p class="muted small">${t("covalHint")}</p>`;
   if (G === "quiz") settings += `<p class="muted small">${t("covalHintQuiz")}</p>`;
   if (G === "bac") settings += `<div><p class="label">${t("catMode")}</p><div class="chips">
@@ -976,6 +983,7 @@ function bindRoom() {
   on("#prevPage", "onclick", () => act({ type: "page", dir: -1 }));
   on("#nextPage", "onclick", () => act({ type: "page", dir: 1 }));
   on("#finishVal", "onclick", () => act({ type: "finish" }));
+  if (S.game === "blindtest") btBind();
 
   // Correction (hôte)
   $$("[data-judge]").forEach((b) => (b.onclick = () => act({ type: "judge", pid: b.dataset.judge, ok: b.dataset.ok === "1" })));

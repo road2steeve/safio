@@ -11,6 +11,7 @@ const GAME_META = {
   youre: { players: "3–30", mins: "10", tags: ["friends", "quick"], c1: "#f97316", c2: "#f43f5e" },
   closest: { players: "1–30", mins: "8", tags: ["new", "quick"], c1: "#eab308", c2: "#22c55e" },
   torpille: { players: "2–8", mins: "15", tags: ["new"], c1: "#0ea5e9", c2: "#6366f1" },
+  blindtest: { players: "2–30", mins: "15", tags: ["new", "popular", "friends"], c1: "#d946ef", c2: "#7c3aed" },
 };
 
 const ART = (() => {
@@ -74,6 +75,12 @@ const ART = (() => {
       <g transform="translate(96 92)"><path d="M-46 0h92l-14 18h-64z" fill="#fff"/><rect x="-18" y="-18" width="30" height="18" rx="3" fill="#e0f2fe"/><rect x="2" y="-30" width="6" height="14" fill="#fff"/></g>
       <g transform="translate(182 48)"><circle r="14" fill="#ff5c7a"/><path d="M0-26v-6M0 26v6M-26 0h-6M26 0h6M-18-18l-4-4M18 18l4 4M18-18l4-4M-18 18l-4 4" stroke="#ffd166" stroke-width="4" stroke-linecap="round"/></g>
       <path d="M30 130q15-8 30 0t30 0 30 0 30 0 30 0 30 0" stroke="#fff" stroke-width="4" fill="none" opacity=".7"/>`),
+    blindtest: wrap("blindtest", `
+      <g transform="translate(86 78)"><circle r="50" fill="#140a2e"/>${[42, 34, 26].map((r) => `<circle r="${r}" fill="none" stroke="#fff" stroke-opacity=".14" stroke-width="2"/>`).join("")}
+        <circle r="15" fill="#ffd34d"/><circle r="3.5" fill="#140a2e"/><path d="M-30-30a42 42 0 0 1 28-12" stroke="#fff" stroke-opacity=".5" stroke-width="4" fill="none" stroke-linecap="round"/></g>
+      <g fill="#fff">${[0, 1, 2, 3, 4].map((i) => `<rect x="${150 + i * 14}" y="${118 - [30, 52, 40, 62, 26][i]}" width="9" height="${[30, 52, 40, 62, 26][i]}" rx="4.5" opacity="${0.6 + i * 0.08}"/>`).join("")}</g>
+      <g transform="translate(166 34) rotate(12)" fill="#fff"><path d="M0 0v26a7 6 0 1 1-4-5V4l22-5v20a7 6 0 1 1-4-5V3z"/></g>
+      <g transform="translate(30 30) rotate(-14)" fill="#ffd34d"><path d="M0 0v18a6 5 0 1 1-4-4V-2l3-1z"/></g>`),
   };
 })();
 

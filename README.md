@@ -3,7 +3,7 @@
 Jeux de soirée multijoueur : un écran crée un salon, les joueurs rejoignent avec leur téléphone
 (QR code ou code à 4 lettres), sans compte, dans la même pièce ou à distance.
 
-Jeux (8) : **Quiz libre**, **Mytho !** (bluff), **Petit Bac**, **Éclair** (le plus rapide), **Même cerveau**, **C'est toi !** (votes), **Au plus près**, **Torpille** (quiz + bataille navale).
+Jeux (9) : **Blind Test** (mode Soirée : la musique vient de l'appli du DJ, SAFIO ne diffuse aucun extrait), **Quiz libre**, **Mytho !** (bluff), **Petit Bac**, **Éclair** (le plus rapide), **Même cerveau**, **C'est toi !** (votes), **Au plus près**, **Torpille** (quiz + bataille navale).
 Modes : salon entre amis (QR/code), **Défi solo** avec **classement mondial**, **partie rapide en ligne** contre un inconnu.
 Langues : français, anglais, espagnol (chaque joueur choisit la sienne). ~430 questions de quiz, 20 thèmes.
 

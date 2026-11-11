@@ -271,3 +271,33 @@ body.bannering .chat { opacity: 0; }
 .qz-head .timer { width: 170px; height: 170px; }
 .qz-head .timer .num { font-size: 72px; }
 .opt { padding: 4px 18px; }
+
+/* ======== SAFIO Blind Test ======== */
+.bt-eq { flex: none; display: flex; align-items: flex-end; justify-content: center; gap: 12px; height: 230px; margin: 10px 0 26px; }
+.bt-eq i { width: 26px; height: 100%; border-radius: 14px; background: linear-gradient(to top, #7c3aed, #d946ef 55%, #22d3c5); transform-origin: bottom; animation: btEq 1s ease-in-out infinite alternate; }
+.bt-eq.idle i { animation: btIdle 2.4s ease-in-out infinite alternate; opacity: .45; }
+@keyframes btEq { 0% { transform: scaleY(.12); } 40% { transform: scaleY(.85); } 70% { transform: scaleY(.4); } 100% { transform: scaleY(1); } }
+@keyframes btIdle { from { transform: scaleY(.08); } to { transform: scaleY(.24); } }
+.bt-dj { display: flex; align-items: center; gap: 26px; font-size: 52px; font-weight: 700; margin-bottom: 18px; }
+.bt-find { font-size: 50px; font-weight: 600; margin-bottom: 22px; }
+.bt-find b { color: #f0abfc; }
+.bt-paused { font-size: 60px; font-weight: 700; color: #ffd23f; margin-bottom: 18px; }
+.bt-buzzers { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; font-size: 40px; font-weight: 700; }
+.bt-buzzers .bz { display: inline-flex; align-items: center; gap: 12px; background: rgba(255, 255, 255, .08); border-radius: 999px; padding: 6px 22px 6px 14px; }
+.bt-buzzers .bz.out { opacity: .4; text-decoration: line-through; }
+.bt-reveal { display: flex; align-items: center; gap: 40px; padding: 26px 36px; border-radius: 36px; margin-bottom: 26px;
+  background: linear-gradient(135deg, rgba(217, 70, 239, .22), rgba(34, 211, 197, .14)); border: 3px solid rgba(217, 70, 239, .55); animation: btPop .6s cubic-bezier(.2, 1.4, .4, 1) both; }
+.bt-reveal .bt-title { font-size: 76px; font-weight: 700; line-height: 1.05; }
+.bt-reveal .bt-artist { font-size: 50px; font-weight: 600; opacity: .92; }
+.bt-reveal .bt-meta { font-size: 36px; opacity: .75; margin-top: 6px; }
+.vinyl { flex: none; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, #ffd34d 0 17%, #140a2e 18% 22%, #241645 23% 40%, #140a2e 41% 60%, #241645 61%); box-shadow: 0 0 0 6px rgba(255, 255, 255, .1); animation: btSpin 3s linear infinite; }
+@keyframes btSpin { to { transform: rotate(360deg); } }
+@keyframes btPop { from { transform: scale(.7); opacity: 0; } to { transform: none; opacity: 1; } }
+body.calm .bt-eq i, body.calm .vinyl { animation: none; }
+.answers.bt-ans { grid-template-columns: 1fr 1fr; }
+.answers.bt-ans .ans .txt { white-space: normal; overflow: visible; font-size: 30px; }
+.bt-eq.small { height: 90px; margin: 0 0 14px; }
+.opts.bt-opts { gap: 10px; }
+.opts.bt-opts .opt { font-size: 38px; padding: 6px 22px; }
+.opts.bt-opts .opt .L { width: 54px; height: 54px; font-size: 32px; }
+.bt-eq.small + .bt-find, .bt-eq.small ~ .bt-find { margin-bottom: 14px; font-size: 44px; }

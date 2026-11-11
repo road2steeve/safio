@@ -55,6 +55,69 @@
       stopBy: "¡STOP! de {name}", correction: "Corrección", letter: "Letra", fleet: "Flotas", shipsLeft: "{n} barcos", sunk: "¡Hundido!", whoIs: "👉 Votad en vuestros móviles", mix: "Temas mezclados",
     },
   };
+  // SAFIO Blind Test : textes de la télé (le son vient de l'appli du DJ, la télé affiche le jeu)
+  var BTX = {
+    fr: { dj: "{name} lance la musique…", ready: "Préparez-vous !", find: "Trouvez", title: "le titre", artist: "l'artiste", work: "le film / dessin animé", and: "et",
+      paused: "⏸ Pause", itWas: "C'était…", nobody: "Personne n'a trouvé", own: "Réponse donnée à voix haute", buzzers: "🔔 Buzzers", skipped: "Morceau passé", song: "Morceau",
+      y70: "Années 70", y80: "Années 80", y90: "Années 90", y00: "Années 2000", y10: "Années 2010", films: "Films et séries", disney: "Disney et animation", frcult: "Chansons françaises cultes", ownCat: "Ma playlist" },
+    en: { dj: "{name} is starting the music…", ready: "Get ready!", find: "Find", title: "the title", artist: "the artist", work: "the movie / cartoon", and: "and",
+      paused: "⏸ Paused", itWas: "It was…", nobody: "Nobody found it", own: "Answer given out loud", buzzers: "🔔 Buzzers", skipped: "Song skipped", song: "Song",
+      y70: "70s", y80: "80s", y90: "90s", y00: "2000s", y10: "2010s", films: "Movies & TV", disney: "Disney & animation", frcult: "French classics", ownCat: "My playlist" },
+    es: { dj: "{name} pone la música…", ready: "¡Preparaos!", find: "Encontrad", title: "el título", artist: "el artista", work: "la película / los dibujos", and: "y",
+      paused: "⏸ Pausa", itWas: "Era…", nobody: "Nadie la encontró", own: "Respuesta dada en voz alta", buzzers: "🔔 Pulsadores", skipped: "Canción saltada", song: "Canción",
+      y70: "Años 70", y80: "Años 80", y90: "Años 90", y00: "Años 2000", y10: "Años 2010", films: "Cine y series", disney: "Disney y animación", frcult: "Clásicos franceses", ownCat: "Mi playlist" },
+  };
+  var BT_ICO = { y70: "🕺", y80: "📼", y90: "💿", y00: "📱", y10: "🎧", films: "🎬", disney: "🏰", frcult: "🇫🇷", own: "🎛️" };
+  function btt(k, vars) {
+    var s = (BTX[lang] && BTX[lang][k]) || BTX.fr[k] || k;
+    if (vars) s = s.replace(/\{(\w+)\}/g, function (_, x) { return vars[x] == null ? "" : vars[x]; });
+    return s;
+  }
+  function btCat(c) { return BT_ICO[c] ? BT_ICO[c] + " " + btt(c === "own" ? "ownCat" : c) : ""; }
+  function btEq(n, idle, small) {
+    var h = "";
+    for (var i = 0; i < n; i++) h += '<i style="animation-delay:-' + ((i * 0.37) % 1.3).toFixed(2) + "s;animation-duration:" + (0.7 + ((i * 7) % 5) / 10).toFixed(2) + 's"></i>';
+    return '<div class="bt-eq' + (idle ? " idle" : "") + (small ? " small" : "") + '">' + h + "</div>";
+  }
+  // Blind Test : ce que la télé montre (jamais la réponse avant la révélation : elle ne la reçoit pas)
+  function btHTML(s, g) {
+    var b = g.bt || {}, rev = g.sub === "review";
+    var parts = (b.parts || []).map(function (p) { return "<b>" + esc(btt(p)) + "</b>"; }).join(" " + esc(btt("and")) + " ");
+    if (!rev && b.step === "cue") {
+      var dj = playerOf(b.dj);
+      return btEq(32, true) + '<div class="bt-dj">' + avatar(dj, 96) + "<span>🎧 " + esc(btt("dj", { name: dj.name })) + "</span></div>" + '<div class="hint">' + esc(btt("ready")) + "</div>";
+    }
+    if (!rev) {
+      var html = btEq(32, !!b.paused, !!b.choices) + (b.paused ? '<div class="bt-paused">' + esc(btt("paused")) + "</div>" : "");
+      if (parts) html += '<div class="bt-find">' + esc(btt("find")) + " " + parts + "</div>";
+      if (b.choices) html += '<div class="opts bt-opts">' + b.choices.map(function (c, i) { return '<div class="opt"><span class="L">' + "ABCD".charAt(i) + "</span>" + esc(tr(c)) + "</div>"; }).join("") + "</div>";
+      if (b.input === "buzz" && b.buzz && b.buzz.length) {
+        html += '<div class="bt-buzzers"><span class="kicker">' + esc(btt("buzzers")) + "</span>" + b.buzz.map(function (x, i) {
+          var p = playerOf(x.pid);
+          return '<span class="bz' + (x.out ? " out" : "") + '">' + (i + 1) + ". " + avatar(p, 54) + esc(p.name) + "</span>";
+        }).join("") + "</div>";
+      }
+      return html;
+    }
+    var R = b.reveal || {};
+    var card = R.own
+      ? '<div class="bt-reveal"><div class="vinyl"></div><div><div class="kicker">' + esc(btt("itWas")) + '</div><div class="bt-title">' + esc(btt("own")) + "</div></div></div>"
+      : '<div class="bt-reveal"><div class="vinyl"></div><div><div class="kicker">' + esc(btt("itWas")) + " " + esc(btCat(R.cat)) + '</div><div class="bt-title">' + esc(tr(R.title)) + "</div>" +
+        (R.artist ? '<div class="bt-artist">' + esc(R.artist) + "</div>" : "") + '<div class="bt-meta">' + (R.work ? "🎬 " + esc(tr(R.work)) + " · " : "📅 ") + esc(R.year) + "</div></div></div>";
+    var gains = g.gains || {}, res = b.res || {};
+    var ids = b.input === "buzz" ? (b.buzz || []).map(function (x) { return x.pid; }) : Object.keys(res);
+    ids.sort(function (x, y) { return (gains[y] || 0) - (gains[x] || 0); });
+    var rows = ids.slice(0, 6).map(function (id) {
+      var r = res[id] || {}, ok = r.ok || {}, partsOk = (b.parts || []).filter(function (p) { return ok[p]; }).length;
+      var txt = r.pick != null && b.choices ? tr(b.choices[r.pick]) : (b.parts || []).map(function (p) { return r.txt && r.txt[p]; }).filter(Boolean).join(" — ");
+      var mark = b.input === "buzz" ? (gains[id] ? "ok" : "no") : partsOk === (b.parts || []).length ? "ok" : partsOk ? "almost" : "no";
+      var time = r.time != null ? r.time : ((b.buzz || []).filter(function (x) { return x.pid === id; })[0] || {}).time;
+      return line(id, txt, mark, (time != null ? (time / 1000).toFixed(1) + " s" : "") + (gains[id] ? " · +" + gains[id] : ""));
+    }).join("");
+    var none = !ids.some(function (id) { return gains[id] > 0; });
+    return (b.skipped ? '<div class="hint">' + esc(btt("skipped")) + "</div>" : "") + card + (none && !b.skipped ? '<div class="hint">😶 ' + esc(btt("nobody")) + "</div>" : "") + '<div class="answers bt-ans">' + rows + "</div>";
+  }
+
   var lang = "fr";
   // Même langue que le site sur cet appareil, sinon celle du navigateur
   try { lang = JSON.parse(localStorage.getItem("lang") || "null") || ""; } catch (e) { lang = ""; }
@@ -456,8 +519,9 @@
       timerTotal = 0; lastLeader = null;
     }
     var r = $("#p-round");
-    if (g.round && g.total) { r.hidden = false; r.textContent = t("round", { a: g.round, b: g.total }); } else r.hidden = true;
-    $("#q-kicker").textContent = s.gameId === "mytho" && g.step === "vote" && g.sub === "play" ? t("findTruth") : themeName(g.theme) || "📱 " + t("onPhones");
+    if (g.round && g.total) { r.hidden = false; r.textContent = s.gameId === "blindtest" ? btt("song") + " " + g.round + " / " + g.total : t("round", { a: g.round, b: g.total }); } else r.hidden = true;
+    if (s.gameId === "blindtest" && g.bt) $("#q-kicker").textContent = btCat(g.bt.cat) || "🎵";
+    else $("#q-kicker").textContent = s.gameId === "mytho" && g.step === "vote" && g.sub === "play" ? t("findTruth") : themeName(g.theme) || "📱 " + t("onPhones");
     // Contenu de la manche : ne se redessine que s'il change (pas de clignotement)
     var qz = $("#qz"), html = qzHTML(s, g);
     if (qz.getAttribute("data-h") !== html) {
@@ -480,7 +544,7 @@
   function answeredRow(s, g, prev) {
     var box = $("#answered");
     if (!box) return;
-    var on = s.players.filter(function (p) { return p.connected; });
+    var on = s.players.filter(function (p) { return p.connected && !(g.bt && g.bt.dj === p.pid); }); // le DJ du Blind Test ne répond pas
     if (g.sub !== "play" || !g.answered) { box.innerHTML = ""; box.removeAttribute("data-h"); return; }
     var done = {};
     g.answered.forEach(function (id) { done[id] = true; });
@@ -560,6 +624,7 @@
       if (g.step === "question" && !rev) return question(g) + fleet;
       return question(g, true) + solution(g) + fleet + '<div class="log">' + log + "</div>";
     }
+    if (id === "blindtest") return btHTML(s, g);
     if (!rev) return question(g);
     // Quiz, Éclair, Au plus près : la correction
     var ans = g.answers || {};

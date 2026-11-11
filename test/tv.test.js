@@ -157,6 +157,10 @@ async function fuzz(game, n) {
   await wait(40);
   host.emit("settings", { settings: { count: 3, rounds: 2, time: 30 } });
   await wait(40);
+  if (game === "blindtest") {
+    host.emit("settings", { settings: { input: pick(["free", "choice", "buzz"]), dj: pick(["host", "rotate"]), fmt: pick(["auto", "both", "work"]), cats: pick([["y80", "disney"], ["films"], ["own"]]) } });
+    await wait(40);
+  }
   host.emit("start", null);
   await wait(120);
   let steps = 0;
@@ -168,6 +172,16 @@ async function fuzz(game, n) {
       const s = p.last;
       if (!s || Math.random() < 0.3) continue;
       const others = ps.filter((x) => x !== p).map((x) => x.pid);
+      if (game === "blindtest") {
+        const b = s.bt || {};
+        if (s.phase !== "play") continue;
+        if (b.step === "cue" && s.cue) p.emit("act", { type: "go" });
+        else if (b.step === "listen" && b.dj === p.pid && b.buzz.length) p.emit("act", { type: "verdict", pid: (b.buzz.find((x) => !x.out) || {}).pid, ok: Math.random() < 0.5 });
+        else if (b.step === "listen" && b.input === "buzz") p.emit("act", { type: "buzz" });
+        else if (b.step === "listen" && b.input === "choice") p.emit("act", { type: "answer", choice: Math.floor(Math.random() * 4) });
+        else if (b.step === "listen") p.emit("act", { type: "answer", values: { title: pick(WORDS), artist: pick(WORDS), work: pick(WORDS) } });
+        continue;
+      }
       if (game === "mytho" && s.step === "vote" && s.options) p.emit("act", { type: "vote", id: pick(s.options).id });
       else if (game === "youre") p.emit("act", { type: "vote", pid: pick(others) });
       else if (game === "bac" && s.categories && s.phase === "play") p.emit("act", { type: Math.random() < 0.1 ? "stop" : "answer", value: s.categories.map(() => (s.letter || "B") + pick(WORDS)), round: s.round });
@@ -191,6 +205,6 @@ async function fuzz(game, n) {
   assert.strictEqual(tv.lastTv.results.ranking.length, n);
   ps.forEach((p) => p.emit("leave"));
 }
-for (const [game, n] of [["quiz", 3], ["mytho", 4], ["bac", 3], ["duel", 2], ["brain", 3], ["youre", 3], ["closest", 3], ["torpille", 3]]) {
+for (const [game, n] of [["quiz", 3], ["mytho", 4], ["bac", 3], ["duel", 2], ["brain", 3], ["youre", 3], ["closest", 3], ["torpille", 3], ["blindtest", 3], ["blindtest", 4]]) {
   test(`Canari ${game} : rien de secret sur la télé, partie complète`, () => fuzz(game, n));
 }

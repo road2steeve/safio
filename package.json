@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --test test/*.test.js",
-    "test:tv": "node test/e2e-tv.js"
+    "test:tv": "node test/e2e-tv.js",
+    "test:bt": "node test/e2e-blindtest.js"
   },
   "author": "",
   "license": "ISC",

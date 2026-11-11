@@ -207,6 +207,8 @@ input[type=range] { width: 100%; accent-color: var(--turq); height: 28px; cursor
 .mode-tile b { font-size: 19px; font-family: var(--font-d); font-weight: 600; }
 .mode-tile span { color: var(--muted); font-size: 14px; }
 .footer { text-align: center; color: var(--muted); font-size: 13px; padding: 40px 0 10px; }
+.universe-link { display: inline-block; margin-top: 12px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--line2); color: var(--text); font-weight: 700; text-decoration: none; }
+.universe-link:hover { border-color: var(--turq); color: var(--turq); }
 
 /* ---------- Écrans secondaires ---------- */
 .title { font-size: 30px; margin: 14px 0 4px; }

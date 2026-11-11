@@ -360,7 +360,7 @@ function renderHome() {
       <button class="mode-tile" id="goRank"><b>${t("worldRanking")}</b><span>${t("nav_ranking")}</span></button>
     </div>
   </section>
-  <footer class="footer">SAFIO Quizz · ${t("noSignup")}</footer>`;
+  <footer class="footer">SAFIO Quizz · ${t("noSignup")}<br><a class="universe-link" href="https://playsafio.onrender.com${({ en: "/en/", es: "/es/" })[lang] || "/"}">${t("universeLink")}</a></footer>`;
   bindNav();
   $("#avBtn").onclick = () => { avOpen = !avOpen; screenKey = ""; render(); };
   $$("[data-av]").forEach((b) => (b.onclick = () => { me.avatar = b.dataset.av; store.set("avatar", me.avatar); screenKey = ""; render(); }));

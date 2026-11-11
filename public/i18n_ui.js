@@ -64,3 +64,26 @@ Object.assign(T.es, {
   lvlTitles: ["Recién llegado", "Jugador de domingo", "Fiestero", "Animador de fiestas", "Cerebrito", "Campeón", "Pro del quiz", "Maestro del juego", "Leyenda"],
   lvlHow: "Cada partida te da XP: cuanto más (y mejor) juegas, más subes.",
 });
+
+// ---------- SAFIO TV : la télé comme écran collectif ----------
+Object.assign(T.fr, {
+  tv_btn: "📺 Afficher sur la télé", tv_title: "Jouer sur la télé", tv_step1: "Sur la télé (ou l'ordinateur branché dessus), ouvre {url}.",
+  tv_step2: "Puis tape ici le petit « code écran » affiché en bas de la télé :", tv_codePh: "Code écran", tv_link: "Relier", tv_linked: "📺 Télé reliée !",
+  tv_screens: "Écrans reliés", tv_screen: "Télé {n}", tv_off: "déconnectée", tv_main: "🔊 son", tv_sound: "Son de la télé", tv_music: "Musique d'ambiance", tv_volume: "Volume",
+  tv_stop: "Arrêter la diffusion", tv_err_code: "Code écran inconnu ou expiré.", tv_err_slow: "Trop d'essais : attends une minute.", tv_err_full: "4 écrans maximum.", tv_err_host: "Seul l'organisateur peut relier une télé.",
+  tv_homeHint: "📺 Une télé ? Ouvre {url} sur la télé ou l'ordinateur branché dessus : la salle et le QR s'affichent, vos amis n'ont plus qu'à scanner.", tv_on: "📺 Sur la télé",
+});
+Object.assign(T.en, {
+  tv_btn: "📺 Show on the TV", tv_title: "Play on the TV", tv_step1: "On the TV (or the computer plugged into it), open {url}.",
+  tv_step2: "Then type the small “screen code” shown at the bottom of the TV:", tv_codePh: "Screen code", tv_link: "Connect", tv_linked: "📺 TV connected!",
+  tv_screens: "Connected screens", tv_screen: "TV {n}", tv_off: "offline", tv_main: "🔊 sound", tv_sound: "TV sound", tv_music: "Background music", tv_volume: "Volume",
+  tv_stop: "Stop showing on TV", tv_err_code: "Unknown or expired screen code.", tv_err_slow: "Too many tries: wait a minute.", tv_err_full: "4 screens max.", tv_err_host: "Only the host can connect a TV.",
+  tv_homeHint: "📺 Got a TV? Open {url} on the TV or the computer plugged into it: the room and QR appear, your friends just scan.", tv_on: "📺 On the TV",
+});
+Object.assign(T.es, {
+  tv_btn: "📺 Mostrar en la tele", tv_title: "Jugar en la tele", tv_step1: "En la tele (o el ordenador conectado a ella), abre {url}.",
+  tv_step2: "Luego escribe aquí el pequeño «código de pantalla» que aparece abajo en la tele:", tv_codePh: "Código de pantalla", tv_link: "Conectar", tv_linked: "📺 ¡Tele conectada!",
+  tv_screens: "Pantallas conectadas", tv_screen: "Tele {n}", tv_off: "desconectada", tv_main: "🔊 sonido", tv_sound: "Sonido de la tele", tv_music: "Música de ambiente", tv_volume: "Volumen",
+  tv_stop: "Dejar de mostrar en la tele", tv_err_code: "Código de pantalla desconocido o caducado.", tv_err_slow: "Demasiados intentos: espera un minuto.", tv_err_full: "4 pantallas como máximo.", tv_err_host: "Solo el anfitrión puede conectar una tele.",
+  tv_homeHint: "📺 ¿Tienes una tele? Abre {url} en la tele o en el ordenador conectado: aparecen la sala y el QR, tus amigos solo tienen que escanear.", tv_on: "📺 En la tele",
+});

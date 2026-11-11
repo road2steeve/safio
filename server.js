@@ -9,6 +9,7 @@ const bac = require("./games/bac");
 const party = require("./games/party");
 const torpille = require("./games/torpille");
 const leaderboard = require("./lib/leaderboard");
+const { createTv } = require("./lib/tv");
 const { shuffle } = require("./lib/util");
 const { THEMES } = require("./data/questions");
 
@@ -30,6 +31,8 @@ app.get("/qr", async (req, res) => {
   res.type("svg").send(await QRCode.toString(text, { type: "svg", margin: 1 }));
 });
 app.get("/health", (_, res) => res.send("ok"));
+// SAFIO TV : la page de l'écran collectif
+app.get("/tv", (_, res) => res.sendFile(path.join(__dirname, "public", "tv.html")));
 
 // ---------- Salons ----------
 const rooms = new Map();
@@ -47,7 +50,7 @@ const cleanSettings = (game, s = {}) => GAMES[game].clean(s, GAMES[game].default
 const connected = (room) => [...room.players.values()].filter((p) => p.connected);
 
 function newRoom(game, hostPid, extra = {}) {
-  const r = { code: newCode(), game, hostPid, phase: "lobby", settings: cleanSettings(game), players: new Map(), g: null, timer: null, ...extra };
+  const r = { code: newCode(), game, hostPid, phase: "lobby", settings: cleanSettings(game), players: new Map(), g: null, timer: null, createdAt: Date.now(), ...extra };
   rooms.set(r.code, r);
   return r;
 }
@@ -109,6 +112,7 @@ function viewOf(room, pid) {
     recap: room.phase === "final" ? room.recap || null : null,
     players: [...room.players.values()].map((p) => ({ pid: p.pid, name: p.name, avatar: p.avatar, ac: p.ac || 0, lvl: levelOf(p.xp || 0), ready: !!p.ready, score: p.score, connected: p.connected })),
   };
+  if (room.screens && room.screens.size) Object.assign(v, tv.playerInfo(room));
   if (room.phase === "final" && room.xpGain && room.xpGain[pid]) v.xp = { id: room.xpId, ...room.xpGain[pid] };
   if (room.g && room.phase !== "lobby" && room.phase !== "final") {
     v.round = room.g.index + 1;
@@ -122,6 +126,14 @@ function viewOf(room, pid) {
 // Chaque joueur reçoit sa propre vue (ex. : sa flotte à Torpille)
 function broadcast(room) {
   for (const p of room.players.values()) if (p.socketId) io.to(p.socketId).emit("state", viewOf(room, p.pid));
+  tv.broadcastTv(room);
+}
+const tv = createTv({ io, rooms, newRoom, viewOf });
+// Supprime un salon (et prévient ses écrans TV)
+function dropRoom(room) {
+  clearTimer(room);
+  rooms.delete(room.code);
+  tv.roomGone(room);
 }
 function clearTimer(room) {
   clearTimeout(room.timer);
@@ -249,6 +261,7 @@ io.on("connection", (socket) => {
   const R = () => socket.data.room;
   const ME = () => socket.data.me;
   const isHost = () => R() && ME() && R().hostPid === ME().pid;
+  tv.bind(socket, { R, isHost, broadcast });
 
   socket.on("create", ({ pid, name, avatar, ac, game, xp, seen }, cb) => {
     if (!GAMES[game] || !pid) return cb && cb({ error: "err_game" });
@@ -264,6 +277,8 @@ io.on("connection", (socket) => {
       if (r.solo || r.quick) return cb && cb({ error: "err_private" });
       if (r.players.size >= 30) return cb && cb({ error: "err_full" });
     }
+    // Salle ouverte par une télé : le premier qui arrive devient l'organisateur
+    if (!r.hostPid || !r.players.has(r.hostPid)) r.hostPid = pid;
     attach(socket, r, addPlayer(r, { pid, name, avatar, ac, xp, seen }));
     cb && cb({ code: r.code });
   });
@@ -388,8 +403,11 @@ io.on("connection", (socket) => {
     socket.leave(room.code);
     socket.data.room = socket.data.me = null;
     handleHostGone(room);
-    if (room.players.size === 0) { clearTimer(room); rooms.delete(room.code); }
-    else broadcast(room);
+    if (room.players.size === 0) {
+      // Une télé est encore allumée : la salle redevient une salle d'accueil vide, prête pour d'autres joueurs
+      if (tv.hasScreen(room)) { clearTimer(room); room.phase = "lobby"; room.g = null; room.hostPid = null; broadcast(room); }
+      else dropRoom(room);
+    } else broadcast(room);
   });
 
   socket.on("disconnect", () => {
@@ -418,11 +436,9 @@ function handleHostGone(room, force) {
 setInterval(() => {
   const now = Date.now();
   for (const [code, r] of rooms) {
-    if (connected(r).length) r.lastActive = now;
-    else if (now - (r.lastActive || now) > 30 * 60 * 1000 || r.players.size === 0) {
-      clearTimer(r);
-      rooms.delete(code);
-    } else r.lastActive = r.lastActive || now;
+    if (connected(r).length || tv.keepAlive(r, now)) r.lastActive = now;
+    else if (now - (r.lastActive || now) > 30 * 60 * 1000 || r.players.size === 0) dropRoom(r);
+    else r.lastActive = r.lastActive || now;
   }
 }, 60 * 1000);
 

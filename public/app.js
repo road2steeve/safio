@@ -98,6 +98,7 @@ socket.on("state", (v) => {
   }
   try { soundFor(prev, v); } catch {}
   render();
+  if (tvDraw) tvDraw();
 });
 socket.on("queueSize", (n) => { queueSize = n; const el = $("#queueSize"); if (el) el.textContent = t("inQueue", { n }); });
 socket.on("kicked", () => { leaveLocal(); toast(t("kicked")); });
@@ -270,6 +271,57 @@ function openSound() {
   draw();
   document.body.appendChild(el);
 }
+// ======== SAFIO TV : relier une télé et régler son son (organisateur) ========
+let tvDraw = null;
+function openTv() {
+  const old = $("#tvModal"); if (old) old.remove();
+  const el = document.createElement("div");
+  el.className = "modal-back"; el.id = "tvModal";
+  let code = "", msg = "";
+  const err = { tv_code: "tv_err_code", tv_slow: "tv_err_slow", tv_full: "tv_err_full", tv_host: "tv_err_host" };
+  tvDraw = () => {
+    if (!S || !isHost()) return close();
+    const sc = S.screens || [], o = S.tvOpts || { sound: true, music: true, volume: 0.8 };
+    const k = JSON.stringify([sc, o, msg, lang]);
+    if (el.dataset.k === k) return;
+    el.dataset.k = k;
+    const url = `<b>${esc(location.host)}/tv</b>`;
+    el.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="${t("tv_title")}">
+      <h3>${t("tv_title")} <button class="x" id="tvClose" aria-label="${t("close")}">✕</button></h3>
+      <p>${t("tv_step1", { url })}</p><p class="muted small">${t("tv_step2")}</p>
+      <div class="row"><input class="input" id="tvCode" maxlength="8" autocomplete="off" autocapitalize="characters" placeholder="${t("tv_codePh")}" value="${esc(code)}" style="text-transform:uppercase;letter-spacing:.12em"><button class="btn primary" id="tvLink">${t("tv_link")}</button></div>
+      ${msg ? `<p class="small" style="color:var(--coral);margin-top:8px">${esc(msg)}</p>` : ""}
+      ${sc.length ? `<p class="label" style="margin-top:16px">${t("tv_screens")}</p>
+        <div class="chips">${sc.map((x, i) => `<span class="chip ${x.connected ? "on" : ""}">${t("tv_screen", { n: i + 1 })}${x.connected ? "" : " · " + t("tv_off")}${x.main ? " · " + t("tv_main") : ""}</span>`).join("")}</div>
+        <div class="chips" style="margin-top:12px"><button class="chip ${o.sound ? "on" : ""}" data-o="sound">${o.sound ? "🔊" : "🔇"} ${t("tv_sound")}</button><button class="chip ${o.music ? "on" : ""}" data-o="music">🎵 ${t("tv_music")}</button></div>
+        <div class="chips" style="margin-top:8px;align-items:center"><span class="muted small">${t("tv_volume")}</span>${[0.3, 0.6, 0.8, 1].map((v) => `<button class="chip ${o.volume === v ? "on" : ""}" data-vol="${v}">${Math.round(v * 100)} %</button>`).join("")}</div>
+        <button class="btn ghost small" id="tvStop" style="margin-top:14px">⏹ ${t("tv_stop")}</button>` : ""}</div>`;
+    const input = el.querySelector("#tvCode");
+    input.oninput = () => { code = input.value.toUpperCase(); };
+    const link = () => {
+      code = input.value.toUpperCase().trim();
+      if (!code) return input.focus();
+      socket.emit("tvLink", { pair: code }, (r) => {
+        if (r && r.ok) { code = ""; msg = ""; toast(t("tv_linked")); }
+        else msg = t(err[r && r.error] || "tv_err_code");
+        if (tvDraw) tvDraw();
+      });
+    };
+    el.querySelector("#tvLink").onclick = link;
+    input.onkeydown = (e) => { if (e.key === "Enter") link(); };
+    el.querySelectorAll("[data-o]").forEach((b) => (b.onclick = () => socket.emit("tvOpts", { ...o, [b.dataset.o]: !o[b.dataset.o] })));
+    el.querySelectorAll("[data-vol]").forEach((b) => (b.onclick = () => socket.emit("tvOpts", { ...o, volume: +b.dataset.vol })));
+    const stop = el.querySelector("#tvStop");
+    if (stop) stop.onclick = () => socket.emit("tvStop", {});
+    el.querySelector("#tvClose").onclick = close;
+  };
+  const close = () => { tvDraw = null; el.remove(); };
+  el.onclick = (e) => { if (e.target === el) close(); };
+  tvDraw();
+  document.body.appendChild(el);
+  if (!(S.screens || []).length) setTimeout(() => { const i = $("#tvCode"); if (i) i.focus(); }, 50);
+}
+
 Sound.onChange(() => { const b = $("#sndBtn"); if (b) b.innerHTML = soundIcon(); });
 
 // Clic sonore sur les éléments interactifs importants
@@ -360,6 +412,7 @@ function renderHome() {
       <button class="mode-tile" id="goRank"><b>${t("worldRanking")}</b><span>${t("nav_ranking")}</span></button>
     </div>
   </section>
+  <p class="tv-hint">${t("tv_homeHint", { url: `<a href="/tv"><b>${esc(location.host)}/tv</b></a>` })}</p>
   <footer class="footer">SAFIO Quizz · ${t("noSignup")}<br><a class="universe-link" href="https://playsafio.onrender.com${({ en: "/en/", es: "/es/" })[lang] || "/"}">${t("universeLink")}</a></footer>`;
   bindNav();
   $("#avBtn").onclick = () => { avOpen = !avOpen; screenKey = ""; render(); };
@@ -501,7 +554,7 @@ function lobbyHTML() {
         <p class="label">${t("inviteFriends")}</p>
         <div class="code-big">${S.code}</div>
         <p class="url">${esc(url)}</p>
-        <div class="actions"><button class="btn teal small" id="share">${t("share")}</button><button class="btn ghost small" id="copyLink">🔗 ${t("copyLink")}</button></div>
+        <div class="actions"><button class="btn teal small" id="share">${t("share")}</button><button class="btn ghost small" id="copyLink">🔗 ${t("copyLink")}</button>${host && !S.solo && !S.quick ? `<button class="btn ghost small" id="tvBtn">${(S.screens || []).some((x) => x.connected) ? t("tv_on") : t("tv_btn")}</button>` : ""}</div>
       </div>
     </div>`;
   const crowd = `<div class="panel"><p class="label">${t("playersInRoom")}</p><div class="crowd" id="crowd"></div>
@@ -841,6 +894,7 @@ function bindRoom() {
   bindNav();
   on("#readyBtn", "onclick", () => socket.emit("ready"));
   on("#editMe", "onclick", openProfile);
+  on("#tvBtn", "onclick", openTv);
   on("#copyLink", "onclick", async () => { try { await navigator.clipboard.writeText(joinUrl(S.code)); toast(t("linkCopied")); } catch { toast(joinUrl(S.code)); } });
   on("#leave", "onclick", () => { if (!confirm(t("leaveQ"))) return; socket.emit("leave"); leaveLocal(); });
   on("#home", "onclick", () => { socket.emit("leave"); leaveLocal(); });

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#070b1f">
+  <meta name="robots" content="noindex">
+  <title>SAFIO Quizz TV</title>
+  <link rel="icon" href="/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/tvapp/tv.css">
+</head>
+<body>
+  <div id="stage" class="stage"><div class="boot">SAFIO <b>TV</b></div></div>
+  <div id="net" class="net" hidden></div>
+  <noscript>SAFIO TV a besoin de JavaScript.</noscript>
+  <!-- Scripts classiques (pas de modules) : compatibles avec les navigateurs des téléviseurs -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/i18n.js"></script>
+  <script src="/i18n_ui.js"></script>
+  <script src="/art.js"></script>
+  <script src="/tvapp/tv.js"></script>
+</body>
+</html>

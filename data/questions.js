@@ -4,7 +4,7 @@
 //   Toutes les versions sont acceptées, quelle que soit la langue du joueur.
 
 const more = require("./questions_more");
-const THEMES_BASE = ["general", "geo", "hist", "sport", "cine", "music", "games", "sci", "nature", "food", "art", "myth", "tech", "manga"];
+const THEMES_BASE = ["general", "geo", "hist", "sport", "cine", "music", "games", "sci", "nature", "food", "art", "myth", "tech", "manga", "series", "people", "odd"];
 const THEMES = [...THEMES_BASE, ...more.NEW_THEMES];
 
 const Q = [
@@ -180,7 +180,7 @@ const Q = [
 ];
 
 Q.push(...more.Q);
-for (const f of ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10", "q11", "q12", "q13", "q14"]) Q.push(...require("./xl/" + f));
+for (const f of ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15", "q16"]) Q.push(...require("./xl/" + f));
 const xtra = require("./xl/extra");
 const seenFr = new Set();
 for (let i = Q.length - 1; i >= 0; i--) { const k = Q[i][1].toLowerCase().trim(); if (seenFr.has(k)) Q.splice(i, 1); else seenFr.add(k); }

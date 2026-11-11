@@ -121,6 +121,9 @@ const THEME_INFO = {
   heroes: { ico: "🦸", fr: "Super-héros", en: "Superheroes", es: "Superhéroes" },
   space: { ico: "🚀", fr: "Espace", en: "Space", es: "Espacio" },
   body: { ico: "🫀", fr: "Corps humain", en: "Human body", es: "Cuerpo humano" },
+  series: { ico: "📺", fr: "Séries TV", en: "TV series", es: "Series de TV" },
+  people: { ico: "⭐", fr: "Personnalités", en: "Famous people", es: "Personajes famosos" },
+  odd: { ico: "🤪", fr: "Insolite", en: "Weird facts", es: "Insólito" },
 };
 
 // Catégories du Petit Bac

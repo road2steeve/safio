@@ -20,6 +20,10 @@ const GAMES = {
   brain: party.brain, youre: party.youre, closest: qa.closest, torpille, blindtest,
 };
 
+// Maximum réaliste par jeu (au-delà, le jeu devient pénible sur un téléphone). Le salon, lui, accepte 30 personnes.
+const MAX_PLAYERS = { quiz: 16, mytho: 12, bac: 16, torpille: 8 };
+const ROOM_MAX = 30;
+
 const PORT = process.env.PORT || 3000;
 const app = express();
 const server = http.createServer(app);
@@ -329,7 +333,7 @@ io.on("connection", (socket) => {
     if (!r.players.has(pid)) {
       if (r.solo || r.quick) return cb && cb({ error: "err_private" });
       if (r.banned && r.banned.has(pid)) return cb && cb({ error: "err_banned" });
-      if (r.players.size >= 30) return cb && cb({ error: "err_full" });
+      if (r.players.size >= ROOM_MAX) return cb && cb({ error: "err_full" });
     }
     // Salle ouverte par une télé : le premier qui arrive devient l'organisateur
     if (!r.hostPid || !r.players.has(r.hostPid)) r.hostPid = pid;
@@ -383,6 +387,8 @@ io.on("connection", (socket) => {
     if (!isHost() || (room.phase !== "lobby" && room.phase !== "final")) return;
     const min = GAMES[room.game].minPlayers || 1;
     if (connected(room).length < min) return cb && cb({ error: "err_min", min });
+    const max = MAX_PLAYERS[room.game] || ROOM_MAX;
+    if (connected(room).length > max) return cb && cb({ error: "err_max", max });
     if (room.solo) {
       room.settings = cleanSettings("duel", { ...SOLO, theme: room.settings.theme });
     }

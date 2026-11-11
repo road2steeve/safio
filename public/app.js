@@ -13,6 +13,7 @@ const GAMES = {
   blindtest: { ico: "🎵", color: "#d946ef" },
 };
 const MIN_PLAYERS = { mytho: 2, brain: 2, youre: 3, torpille: 2, blindtest: 2 };
+const MAX_PLAYERS = { quiz: 16, mytho: 12, bac: 16, torpille: 8 }; // les autres jeux : 30 (taille du salon)
 // Ambiance musicale selon le type de jeu
 const GAME_MUSIC = { quiz: "play", bac: "calm", duel: "fast", closest: "fast", mytho: "calm", brain: "calm", youre: "calm", torpille: "play" };
 
@@ -923,7 +924,7 @@ function bindRoom() {
   on("#seeRank", "onclick", () => { const th = rankOf(S.settings.theme); socket.emit("leave"); store.del("room"); S = null; openRanking(th); });
   on("#toLobby", "onclick", () => confirm(t("backLobbyQ")) && socket.emit("lobby"));
   on("#toLobby2", "onclick", () => socket.emit("lobby"));
-  const start = () => socket.emit("start", null, (r) => r && r.error && toast(t(r.error, { min: r.min })));
+  const start = () => socket.emit("start", null, (r) => r && r.error && toast(t(r.error, { min: r.min, max: r.max })));
   on("#again", "onclick", start);
   on("#start", "onclick", start);
   on("#next", "onclick", () => socket.emit("next"));
@@ -1050,8 +1051,9 @@ function updateLive() {
     const ready = others.filter((p) => p.ready).length;
     const min = MIN_PLAYERS[S.game] || 1;
     if (isHost()) {
-      const okN = conn.length >= min;
-      st.innerHTML = `${t("hostStatus", { n: conn.length })}<small>${!okN ? t("needMore", { n: min }) : others.length && ready === others.length ? "✓ " + t("allReady") : t("readyCount", { r: ready, n: others.length })}</small>`;
+      const max = MAX_PLAYERS[S.game] || 30;
+      const okN = conn.length >= min && conn.length <= max;
+      st.innerHTML = `${t("hostStatus", { n: conn.length })}<small>${conn.length > max ? t("err_max", { max }) : !okN ? t("needMore", { n: min }) : others.length && ready === others.length ? "✓ " + t("allReady") : t("readyCount", { r: ready, n: others.length })}</small>`;
       const b = $("#start"); if (b) b.disabled = !okN;
     } else {
       const mine = S.players.find((p) => p.pid === pid);

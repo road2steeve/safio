@@ -81,3 +81,22 @@ test("Pseudos insultants masqués", async () => {
   await wait(100);
   assert.ok(!/fuck/i.test(a.last.players[0].name));
 });
+
+test("Maximum par jeu : Torpille refuse de démarrer à 9, démarre à 8", async () => {
+  const host = await client("maxhost01");
+  const r = await host.call("create", { ...prof("maxhost01", "Hôte"), game: "torpille" });
+  const guests = [];
+  for (let i = 0; i < 8; i++) {
+    const g = await client("maxg" + i + "xx");
+    await g.call("join", { code: r.code, ...prof("maxg" + i + "xx", "J" + i) });
+    guests.push(g);
+  }
+  const res = await host.call("start", null);
+  assert.strictEqual(res && res.error, "err_max");
+  assert.strictEqual(res.max, 8);
+  guests[0].emit("leave");
+  await wait(100);
+  host.emit("start", null);
+  await wait(200);
+  assert.notStrictEqual(host.last.phase, "lobby", "à 8, la partie démarre");
+});

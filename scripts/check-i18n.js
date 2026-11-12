@@ -53,5 +53,15 @@ cover("Au plus près", Q.closest, (x) => x.q);
 cover("Mytho !", P.bluff, (x) => x.q);
 cover("Même cerveau", P.same, (x) => x.q);
 cover("C'est toi !", P.who, (x) => x.q);
+// Traductions orphelines (question française modifiée ou supprimée depuis)
+const I = require("../data/i18n");
+const ids = new Set(Q.quiz.map(I.contentId));
+for (const l of I.LANGS) {
+  const dir = path.join(__dirname, "..", "data", "i18n", l);
+  for (const f of fs.readdirSync(dir).filter((f) => f.startsWith("quiz-"))) {
+    const lost = Object.keys(require(path.join(dir, f))).filter((id) => !ids.has(id));
+    if (lost.length) { bad += lost.length; console.log(`✗ [${l}] ${f} : ${lost.length} traduction(s) sans question française (texte FR modifié ?) → ${lost.slice(0, 5).join(", ")}`); }
+  }
+}
 console.log(bad ? `\n${bad} texte(s) d'interface manquant(s).` : "\n✓ Interface complète dans les " + LANGS.length + " langues.");
 process.exit(bad ? 1 : 0);

@@ -233,4 +233,8 @@ const closest = [
   return withMeta({ q: { fr, en, es }, n, u: { fr: ufr, en: uen, es: ues } }, meta);
 });
 
+// Langues ajoutées (néerlandais, allemand…) : traductions dans data/i18n/<langue>/
+const I18N = require("./i18n");
+I18N.applyQuiz(quiz);
+
 module.exports = { THEMES, quiz, closest, META, withMeta };

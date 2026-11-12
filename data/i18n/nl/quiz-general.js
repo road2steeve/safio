@@ -91,7 +91,7 @@ module.exports = {
   "1lvjjpd": ["Welke kleur krijg je als je rood en geel mengt?","Oranje"],
   "ru2dos": ["Welke kleur krijg je als je blauw en rood mengt?","Paars / Violet"],
   "1rp9oub": ["Wat is het tegenovergestelde van ‘links’?","Rechts"],
-  "8fiuf3": ["Hoeveel klinkers telt het Franse alfabet (de y meegerekend)?"],
+  "8fiuf3": ["Hoeveel klinkers telt het Franse alfabet (de y meegerekend)?","6"],
   "1fsrhr5": ["Welke letter wordt het meest gebruikt in het Nederlands?"],
   "1y2ett6": ["Hoeveel regeringsjaren viert een diamanten jubileum?"],
   "1tkton7": ["Hoe heet de dag van de geliefden op 14 februari?","Valentijnsdag / Valentijn"],

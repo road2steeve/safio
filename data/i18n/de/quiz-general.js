@@ -91,7 +91,7 @@ module.exports = {
   "1lvjjpd": ["Welche Farbe entsteht, wenn man Rot und Gelb mischt?","Orange"],
   "ru2dos": ["Welche Farbe entsteht, wenn man Blau und Rot mischt?","Lila / Violett"],
   "1rp9oub": ["Was ist das Gegenteil von „links“?","Rechts"],
-  "8fiuf3": ["Wie viele Vokale hat das französische Alphabet (das Y mitgezählt)?"],
+  "8fiuf3": ["Wie viele Vokale hat das französische Alphabet (das Y mitgezählt)?","6"],
   "1fsrhr5": ["Welcher Buchstabe wird im Deutschen am häufigsten verwendet?"],
   "1y2ett6": ["Wie viele Regierungsjahre feiert ein diamantenes Thronjubiläum?"],
   "1tkton7": ["Wie heißt der Tag der Verliebten am 14. Februar?","Valentinstag"],

@@ -118,27 +118,33 @@
     return (b.skipped ? '<div class="hint">' + esc(btt("skipped")) + "</div>" : "") + card + (none && !b.skipped ? '<div class="hint">😶 ' + esc(btt("nobody")) + "</div>" : "") + '<div class="answers bt-ans">' + rows + "</div>";
   }
 
-  var lang = "fr";
-  // Même langue que le site sur cet appareil, sinon celle du navigateur
-  try { lang = JSON.parse(localStorage.getItem("lang") || "null") || ""; } catch (e) { lang = ""; }
-  if (!TX[lang]) lang = (navigator.language || "fr").slice(0, 2);
-  if (!TX[lang]) lang = "en";
+  // Langues ajoutées par public/locales/<code>.js (néerlandais, allemand…)
+  var L10N = window.SAFIO_L10N || {};
+  for (var lc in L10N) { if (L10N[lc].tv) TX[lc] = L10N[lc].tv; if (L10N[lc].btv) BTX[lc] = L10N[lc].btv; }
+  // Langue de la télé, indépendante de celle des joueurs : ?lang=xx, sinon le choix fait sur cette télé,
+  // sinon la langue du site sur cet appareil, sinon celle du navigateur
+  var TV_LANG_KEY = "sq-tv-lang";
+  var okLang = function (l) { return !!(l && TX[l]); };
+  var lang = safioUrlLang(okLang);
+  if (!lang) { try { lang = localStorage.getItem(TV_LANG_KEY) || JSON.parse(localStorage.getItem("lang") || "null") || ""; } catch (e) { lang = ""; } }
+  if (!okLang(lang)) lang = safioDetectLang(okLang);
+  if (!okLang(lang)) lang = SAFIO_DEFAULT_LANG;
   document.documentElement.lang = lang;
   function t(k, vars) {
     var s = TX[lang][k] || TX.fr[k] || k;
     if (vars) s = s.replace(/\{(\w+)\}/g, function (_, x) { return vars[x] == null ? "" : vars[x]; });
     return s;
   }
-  var site = function (k) { return (SITE_T[lang] && SITE_T[lang][k]) || (SITE_T.en && SITE_T.en[k]) || ""; };
+  var site = function (k) { return (SITE_T[lang] && SITE_T[lang][k]) || (SITE_T.fr && SITE_T.fr[k]) || ""; };
   var title = function (id) { return site("g_" + id) || id; };
-  var tr = function (o) { return o && typeof o === "object" ? (o[lang] != null ? o[lang] : o.en != null ? o.en : o.fr) : o == null ? "" : o; };
+  var tr = function (o) { return o && typeof o === "object" ? (o[lang] != null ? o[lang] : o.fr != null ? o.fr : o.en) : o == null ? "" : o; };
   var themeName = function (th) {
     if (!th) return "";
     if (th === "mix") return "🎲 " + t("mix");
     var i = typeof THEME_INFO !== "undefined" && THEME_INFO[th];
-    return i ? i.ico + " " + (i[lang] || i.en) : "";
+    return i ? i.ico + " " + (i[lang] || i.fr) : "";
   };
-  var catName = function (c) { return typeof BAC_CATS !== "undefined" && BAC_CATS[c] ? BAC_CATS[c][lang] || BAC_CATS[c].en : c; };
+  var catName = function (c) { return typeof BAC_CATS !== "undefined" && BAC_CATS[c] ? BAC_CATS[c][lang] || BAC_CATS[c].fr : c; };
   var COLORS = typeof AV_COLORS !== "undefined" ? AV_COLORS : ["#7c5cff"];
   // Avatar du Quizz : un emoji sur une pastille de couleur
   var avatar = function (p, size) {
@@ -365,8 +371,28 @@
   // ---------- Démarrage : un seul « OK » (télécommande, clavier, clic) active le son et le plein écran ----------
   var gate = document.createElement("div");
   gate.className = "gate";
-  gate.innerHTML = '<button class="gate-btn" id="gate-btn">▶ ' + esc(t("start")) + '</button><div class="gate-help">' + esc(t("startHelp")) + "</div>";
+  // Choix de la langue de la télé (drapeaux) sur l'écran de démarrage ; touche « L » ensuite
+  function gateHTML() {
+    return '<button class="gate-btn" id="gate-btn">▶ ' + esc(t("start")) + '</button><div class="gate-help">' + esc(t("startHelp")) + "</div>" +
+      '<div class="gate-langs" role="group">' + SAFIO_LANGS.filter(function (l) { return TX[l.code]; }).map(function (l) {
+        return '<button class="gate-lang' + (l.code === lang ? " on" : "") + '" data-tvlang="' + l.code + '" lang="' + l.code + '">' + SAFIO_FLAG(l.code, 30) + "<span>" + esc(l.name) + "</span></button>";
+      }).join("") + "</div>";
+  }
+  function setTvLang(l) {
+    if (!okLang(l) || l === lang) return;
+    lang = l;
+    document.documentElement.lang = l;
+    try { localStorage.setItem(TV_LANG_KEY, l); } catch (e) {}
+    if (gate.className.indexOf("gone") < 0) { gate.innerHTML = gateHTML(); gateBtn = $("#gate-btn"); gateBtn.onclick = begin; bindGateLangs(); }
+    if (state) render(state, true);
+  }
+  function bindGateLangs() {
+    var bs = gate.querySelectorAll("[data-tvlang]");
+    for (var i = 0; i < bs.length; i++) bs[i].onclick = function (e) { e.stopPropagation(); setTvLang(this.getAttribute("data-tvlang")); };
+  }
+  gate.innerHTML = gateHTML();
   document.body.appendChild(gate);
+  bindGateLangs();
   var gateBtn = $("#gate-btn");
   setTimeout(function () { try { gateBtn.focus(); } catch (e) {} }, 50);
   function begin() {
@@ -384,6 +410,7 @@
     if (!audioOn()) { begin(); return; }
     if (k === "m" || k === "M") { localMute = !localMute; applyVolume(); banner(localMute ? "🔇 " + t("muted") : "🔊", ""); }
     if (k === "f" || k === "F") begin();
+    if (k === "l" || k === "L") { var codes = SAFIO_LANGS.map(function (x) { return x.code; }).filter(okLang); setTvLang(codes[(codes.indexOf(lang) + 1) % codes.length]); banner("", "", SAFIO_FLAG(lang, 40)); }
   });
   document.addEventListener("click", function () { if (!audioOn()) begin(); });
   document.addEventListener("mousemove", function () { document.body.classList.add("pointer"); clearTimeout(window.__pt); window.__pt = setTimeout(function () { document.body.classList.remove("pointer"); }, 3000); });
@@ -747,6 +774,7 @@
     at(4000, function () {
       show(1);
       var w = rk[0] ? playerOf(rk[0].pid) : null;
+      if (!$("#res-title")) return; // la scène a déjà changé (retour au salon pendant le podium)
       if (w) $("#res-title").textContent = "🏆 " + t("winner", { name: w.name });
       $("#spot").className = "spot on";
       confetti();
@@ -754,6 +782,7 @@
       at(1800, function () { playMusic("podium"); });
     });
     at(5200, function () {
+      if (!$("#res-board")) return;
       $("#res-board").className = "board show";
       rankRows($("#rows"), s.players.map(function (p) { return { pid: p.pid, score: p.score }; }));
     });

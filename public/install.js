@@ -51,7 +51,10 @@
   function close() { if (bg) { bg.remove(); bg = null; } }
   function open() {
     close();
-    var l = (document.documentElement.lang || navigator.language || "fr").slice(0, 2); var t = TX[l] || TX.fr;
+    var l = (document.documentElement.lang || navigator.language || "fr").slice(0, 2);
+    var x = window.SAFIO_L10N && window.SAFIO_L10N[l] && window.SAFIO_L10N[l].install; // langues de public/locales/
+    if (!TX[l] && x) TX[l] = Object.assign({}, x, { title: x.title.replace("{NAME}", NAME) });
+    var t = TX[l] || TX.fr;
     var ua = navigator.userAgent || "";
     var ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
     var host = '<span class="host">' + location.host + "</span>";

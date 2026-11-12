@@ -23,16 +23,32 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
   del(k) { try { localStorage.removeItem(k); } catch {} },
 };
-let lang = store.get("lang", null) || (navigator.language || "en").slice(0, 2);
-if (!T[lang]) lang = "en";
+// Langue : ?lang=xx (venu de playsafio.com), sinon le choix enregistré, sinon la langue du navigateur.
+// Chaque joueur a sa propre langue : la partie et les autres joueurs ne sont pas concernés.
+const okLang = (l) => !!(l && T[l]);
+let lang = safioUrlLang(okLang) || store.get("lang", null);
+if (!okLang(lang)) lang = safioDetectLang(okLang);
+if (!okLang(lang)) lang = SAFIO_DEFAULT_LANG;
+if (safioUrlLang(okLang)) store.set("lang", lang);
 document.documentElement.lang = lang;
-const t = (k, vars = {}) => String(T[lang][k] ?? T.en[k] ?? k).replace(/\{(\w+)\}/g, (_, v) => vars[v] ?? "");
-const tr = (obj) => (obj && typeof obj === "object" ? obj[lang] ?? obj.en ?? Object.values(obj)[0] : obj ?? "");
-const catName = (c) => (BAC_CATS[c] ? BAC_CATS[c][lang] : c);
+const t = (k, vars = {}) => String(T[lang][k] ?? T[SAFIO_DEFAULT_LANG][k] ?? k).replace(/\{(\w+)\}/g, (_, v) => vars[v] ?? "");
+// Contenu en plusieurs langues : la langue du joueur, sinon le français (langue de secours)
+const tr = (obj) => (obj && typeof obj === "object" ? obj[lang] ?? obj[SAFIO_DEFAULT_LANG] ?? obj.en ?? Object.values(obj)[0] : obj ?? "");
+// Texte d'une question + petite mention quand elle n'existe pas encore dans la langue du joueur
+const qText = (obj) => esc(tr(obj)) + (obj && typeof obj === "object" && obj[lang] == null && obj[SAFIO_DEFAULT_LANG] != null && lang !== SAFIO_DEFAULT_LANG ? `<small class="fr-note">${SAFIO_FLAG(SAFIO_DEFAULT_LANG, 16)} ${t("contentFr")}</small>` : "");
+const catName = (c) => (BAC_CATS[c] ? BAC_CATS[c][lang] ?? BAC_CATS[c][SAFIO_DEFAULT_LANG] : c);
 const gameName = (g) => t("g_" + g);
-const themeName = (th) => (th === "_global" ? t("allThemes") : THEME_INFO[th] ? `${THEME_INFO[th].ico} ${THEME_INFO[th][lang]}` : th);
-function setLang(l) { lang = l; store.set("lang", l); document.documentElement.lang = l; screenKey = ""; render(); }
-const langSelect = () => `<select class="lang" id="langSel" aria-label="${t("language")}">${Object.entries(LANGS).map(([k, v]) => `<option value="${k}" ${k === lang ? "selected" : ""}>${innerWidth < 520 ? v.split(" ")[0] : v}</option>`).join("")}</select>`;
+const themeName = (th) => (th === "_global" ? t("allThemes") : THEME_INFO[th] ? `${THEME_INFO[th].ico} ${THEME_INFO[th][lang] ?? THEME_INFO[th][SAFIO_DEFAULT_LANG]}` : th);
+// Changement de langue immédiat, sans rechargement : ce qui est en train d'être tapé est conservé
+function setLang(l) {
+  const keep = [...document.querySelectorAll("input[id], textarea[id]")].filter((e) => e.type !== "checkbox" && e.type !== "radio" && e.value).map((e) => [e.id, e.value]);
+  lang = l; store.set("lang", l); document.documentElement.lang = l; screenKey = ""; render();
+  for (const [id, v] of keep) { const e = document.getElementById(id); if (e && !e.value) e.value = v; }
+}
+// Sélecteur de langue : drapeau + code, menu des langues (n'agit que sur ce téléphone)
+const langSelect = () => `<div class="langdd" id="langDD"><button class="lang" id="langBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="${t("language")}" title="${t("language")}">${SAFIO_FLAG(lang, 22)}<span class="lang__code">${lang.toUpperCase()}</span><span class="lang__caret" aria-hidden="true">▾</span></button>
+  <ul class="langdd__list" role="menu">${SAFIO_LANGS.filter((l) => T[l.code]).map((l) => `<li><button type="button" role="menuitemradio" aria-checked="${l.code === lang}" data-setlang="${l.code}" lang="${l.code}">${SAFIO_FLAG(l.code, 24)}<span>${l.name}</span></button></li>`).join("")}</ul></div>`;
+document.addEventListener("click", (e) => { const dd = document.getElementById("langDD"); if (dd && dd.classList.contains("open") && !dd.contains(e.target)) { dd.classList.remove("open"); document.getElementById("langBtn").setAttribute("aria-expanded", "false"); } });
 
 // ======== État ========
 const $ = (sel) => document.querySelector(sel);
@@ -255,7 +271,9 @@ function navHTML(inRoom) {
 const soundIcon = () => { const p = Sound.prefs; return p.muted || (!p.music && !p.sfx) ? "🔇" : "🔊"; };
 function bindNav() {
   const on = (sel, fn) => { const el = $(sel); if (el) el.onclick = fn; };
-  const ls = $("#langSel"); if (ls) ls.onchange = (e) => setLang(e.target.value);
+  const lb = $("#langBtn");
+  if (lb) lb.onclick = (e) => { e.stopPropagation(); const dd = $("#langDD"); const o = dd.classList.toggle("open"); lb.setAttribute("aria-expanded", String(o)); };
+  for (const b of $$("[data-setlang]")) b.onclick = () => setLang(b.dataset.setlang);
   on("#sndBtn", openSound);
   on("#brand", () => { if (!S) { local = "home"; screenKey = ""; render(); window.scrollTo({ top: 0, behavior: "smooth" }); } });
   on("#navRank", (e) => { e.preventDefault(); openRanking("_global"); });
@@ -412,7 +430,7 @@ function renderHome() {
     </div>
   </section>
 
-  <div class="safio-links"><a class="safio-link safio-link--install" href="#" data-install>${({ fr: "📲 Installer l’appli", en: "📲 Install the app", es: "📲 Instalar la app" })[lang] || ({ fr: "📲 Installer l’appli", en: "📲 Install the app", es: "📲 Instalar la app" }).fr}</a><a class="safio-link" href="https://playsafio.com${({ en: "/en/", es: "/es/" })[lang] || "/"}">${t("universeLink")}</a></div>
+  <div class="safio-links"><a class="safio-link safio-link--install" href="#" data-install>${({ fr: "📲 Installer l’appli", en: "📲 Install the app", es: "📲 Instalar la app", nl: "📲 App installeren", de: "📲 App installieren" })[lang] || ({ fr: "📲 Installer l’appli", en: "📲 Install the app", es: "📲 Instalar la app", nl: "📲 App installeren", de: "📲 App installieren" }).fr}</a><a class="safio-link" href="https://playsafio.com${({ en: "/en/", es: "/es/", nl: "/nl/", de: "/de/" })[lang] || "/"}">${t("universeLink")}</a></div>
   <section class="section" id="games">
     <div class="section-head"><div><h2>${t("gamesTitle")}</h2><p>${t("gamesSub")}</p></div>
       <div class="tabs" role="tablist">${cats.map((c) => `<button class="tab ${homeCat === c ? "on" : ""}" data-cat-tab="${c}" role="tab" aria-selected="${homeCat === c}">${t("cat_" + c)}</button>`).join("")}</div></div>
@@ -433,7 +451,7 @@ function renderHome() {
     </div>
   </section>
   <p class="tv-hint">${t("tv_homeHint", { url: `<a href="/tv"><b>${esc(location.host)}/tv</b></a>` })}</p>
-  <footer class="footer">SAFIO Quizz · ${t("noSignup")}<br><a class="universe-link" href="https://playsafio.com${({ en: "/en/", es: "/es/" })[lang] || "/"}">${t("universeLink")}</a><br><a class="universe-link install-link" href="#" data-install>${({ fr: "📲 Installer l’appli sur ton téléphone", en: "📲 Install the app on your phone", es: "📲 Instala la app en tu móvil" })[lang] || ({ fr: "📲 Installer l’appli sur ton téléphone", en: "📲 Install the app on your phone", es: "📲 Instala la app en tu móvil" }).fr}</a></footer>`;
+  <footer class="footer">SAFIO Quizz · ${t("noSignup")}<br><a class="universe-link" href="https://playsafio.com${({ en: "/en/", es: "/es/", nl: "/nl/", de: "/de/" })[lang] || "/"}">${t("universeLink")}</a><br><a class="universe-link install-link" href="#" data-install>${({ fr: "📲 Installer l’appli sur ton téléphone", en: "📲 Install the app on your phone", es: "📲 Instala la app en tu móvil", nl: "📲 Installeer de app op je telefoon", de: "📲 Installiere die App auf deinem Handy" })[lang] || ({ fr: "📲 Installer l’appli sur ton téléphone", en: "📲 Install the app on your phone", es: "📲 Instala la app en tu móvil", nl: "📲 Installeer de app op je telefoon", de: "📲 Installiere die App auf deinem Handy" }).fr}</a></footer>`;
   bindNav();
   $("#avBtn").onclick = () => { avOpen = !avOpen; screenKey = ""; render(); };
   $$("[data-av]").forEach((b) => (b.onclick = () => { me.avatar = b.dataset.av; store.set("avatar", me.avatar); screenKey = ""; render(); }));
@@ -650,7 +668,7 @@ function openProfile() {
 const timerHTML = () => `<div class="timer" id="timer"><div class="timer-bar"><i id="tbar"></i></div><span class="timer-num" id="tnum"></span></div>`;
 const themeBadge = () => (S.theme && THEME_INFO[S.theme] ? ` · ${THEME_INFO[S.theme].ico} ${THEME_INFO[S.theme][lang]}` : "");
 const roundHTML = (word = "question") => `<div class="hud"><div class="round"><span class="num">${GAMES[S.game].ico}</span>${t(word)} ${S.round} / ${S.total}${themeBadge()}</div></div>`;
-const questionHTML = () => `<div class="question">${esc(tr(S.question))}</div>${S.img ? `<img class="qimg" src="${esc(S.img)}" alt="">` : ""}`;
+const questionHTML = () => `<div class="question">${qText(S.question)}</div>${S.img ? `<img class="qimg" src="${esc(S.img)}" alt="">` : ""}`;
 const answerForm = (ph, numeric) => `<div id="answerZone"><form class="answer-form" id="ansForm">
     <input class="input" id="ans" autocomplete="off" ${numeric ? 'inputmode="decimal"' : ""} placeholder="${ph}" maxlength="80" aria-label="${ph}">
     <button class="btn primary">${t("send")}</button></form></div>`;
@@ -772,7 +790,7 @@ function mythoReview() {
 
 // ---------- Même cerveau ----------
 function brainPlay() {
-  return `<div class="stage">${roundHTML()}${timerHTML()}<div class="question">${esc(tr(S.question))}</div>
+  return `<div class="stage">${roundHTML()}${timerHTML()}<div class="question">${qText(S.question)}</div>
     ${iDid() ? sentHTML(myAnswer) : answerForm(t("brainPh"))}${waitingHTML()}${skipBtn()}</div>`;
 }
 function brainReview() {
@@ -781,14 +799,14 @@ function brainReview() {
       <span class="what"><b>${esc(gr.text)}</b> <span class="muted small">×${gr.pids.length}</span></span>
       <span class="voters">${gr.pids.map((p) => playerOf(p).avatar).join(" ")}</span>${gr.pids.length > 1 ? `<span class="pts">+${gr.pids.length - 1}</span>` : ""}</div>`).join("")
     || `<p class="muted">${t("nobody")}</p>`;
-  return `<div class="stage">${roundHTML()}<div class="question">${esc(tr(S.question))}</div><div class="answers">${rows}</div>
+  return `<div class="stage">${roundHTML()}<div class="question">${qText(S.question)}</div><div class="answers">${rows}</div>
     ${host ? `<p class="muted small">${t("brainMerge")}</p>` : ""}${nextBtn()}</div>`;
 }
 
 // ---------- C'est toi ! ----------
 function yourePlay() {
   const others = S.players.filter((p) => p.pid !== pid);
-  return `<div class="stage">${roundHTML()}${timerHTML()}<div class="question">${esc(tr(S.question))}</div>
+  return `<div class="stage">${roundHTML()}${timerHTML()}<div class="question">${qText(S.question)}</div>
     ${iDid() ? `<p class="sent">${t("voteSent")}</p>` : `<p class="muted" style="margin-bottom:12px">${t("youreVote")}</p>
     <div class="vote-grid">${others.map((p) => `<button class="vote-btn" data-who="${p.pid}"><span>${p.avatar}</span>${esc(p.name)}</button>`).join("")}</div>`}
     ${waitingHTML()}${skipBtn()}</div>`;
@@ -798,7 +816,7 @@ function youreReview() {
   const rows = Object.entries(S.tally).sort((a, b) => b[1] - a[1]).map(([id, n]) => `<div class="ans ${S.elected.includes(id) ? "ok" : ""}"><span class="who">${who(id)}</span>
     <span class="what muted small">${t("votesFor", { n })}</span><span class="voters">${Object.keys(S.votes).filter((v) => S.votes[v] === id).map((v) => playerOf(v).avatar).join(" ")}</span></div>`).join("");
   const gains = S.players.filter((p) => S.gains[p.pid]).map((p) => `${p.avatar} ${esc(p.name)} <b class="pts">+1</b>`).join(" · ");
-  return `<div class="stage">${roundHTML()}<div class="question">${esc(tr(S.question))}</div>
+  return `<div class="stage">${roundHTML()}<div class="question">${qText(S.question)}</div>
     ${names ? `<div class="solution">👑 ${t("elected", { n: names })}</div>` : `<p class="muted">${t("nobody")}</p>`}
     <div class="answers">${rows}</div><p class="small">${gains}</p>${nextBtn()}</div>`;
 }

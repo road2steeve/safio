@@ -301,3 +301,10 @@ body.calm .bt-eq i, body.calm .vinyl { animation: none; }
 .opts.bt-opts .opt { font-size: 38px; padding: 6px 22px; }
 .opts.bt-opts .opt .L { width: 54px; height: 54px; font-size: 32px; }
 .bt-eq.small + .bt-find, .bt-eq.small ~ .bt-find { margin-bottom: 14px; font-size: 44px; }
+/* Langue de la télé (indépendante de celle des joueurs) */
+.gate-langs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 46vw; margin-top: 4px; }
+.gate-lang { display: inline-flex; align-items: center; gap: 8px; padding: .35em .8em; border-radius: 999px; border: 2px solid rgba(255, 255, 255, .18); background: rgba(10, 8, 30, .7);
+  color: #fff; font: 700 clamp(12px, 1vw, 20px) var(--display); cursor: pointer; }
+.gate-lang.on { border-color: var(--yellow); }
+.gate-lang:focus { outline: 3px solid var(--yellow); outline-offset: 3px; }
+.flag { display: block; flex: none; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .3); }

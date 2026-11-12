@@ -8,7 +8,8 @@
     "test": "node --test test/*.test.js",
     "test:tv": "node test/e2e-tv.js",
     "test:bt": "node test/e2e-blindtest.js",
-    "check": "node scripts/check-content.js"
+    "check": "node scripts/check-content.js",
+    "check:i18n": "node scripts/check-i18n.js"
   },
   "author": "",
   "license": "ISC",

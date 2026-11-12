@@ -19,6 +19,8 @@ var TX = {
   fr: ['Ouverture de', 'Le jeu se réveille, encore quelques secondes…', 'Presque prêt ! Le premier lancement peut prendre jusqu’à une minute.'],
   en: ['Opening', 'The game is waking up, just a few more seconds…', 'Almost ready! The first launch can take up to a minute.'],
   es: ['Abriendo', 'El juego se está despertando, unos segundos más…', '¡Casi listo! El primer arranque puede tardar hasta un minuto.'],
+  nl: ['Bezig met openen van', 'Het spel wordt wakker, nog even geduld…', 'Bijna klaar! De eerste keer opstarten kan tot een minuut duren.'],
+  de: ['Öffne', 'Das Spiel wacht auf, nur noch ein paar Sekunden…', 'Fast fertig! Der erste Start kann bis zu einer Minute dauern.'],
 };
 function splash(lang) {
   var t = TX[lang] || TX.fr;
@@ -42,8 +44,10 @@ function splash(lang) {
     '})()</script></body></html>';
 }
 function splashResponse(req) {
-  var lang = ((req.headers.get('Accept-Language') || 'fr').slice(0, 2)).toLowerCase();
-  return new Response(splash(TX[lang] ? lang : 'fr'), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
+  // Langue : ?lang= dans l'adresse (lien du portail), sinon celle du navigateur ; une langue hors des 5 → anglais
+  var q = (new URL(req.url).searchParams.get('lang') || '').slice(0, 2).toLowerCase();
+  var lang = TX[q] ? q : ((req.headers.get('Accept-Language') || 'fr').slice(0, 2)).toLowerCase();
+  return new Response(splash(TX[lang] ? lang : 'en'), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } });
 }
 
 self.addEventListener('fetch', function (e) {

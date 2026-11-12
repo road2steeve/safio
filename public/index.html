@@ -20,7 +20,8 @@
   <script src="/install.js" defer></script>
 </head>
 <body>
-  <main id="app"></main>
+  <style>.boot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:100vh;min-height:100dvh;background:#070b1f;color:#eef1ff;font:800 24px/1.2 system-ui,-apple-system,sans-serif;text-align:center}.boot-logo{border-radius:26px;animation:bootbob 1.6s ease-in-out infinite}@keyframes bootbob{50%{transform:translateY(-8px) scale(1.04)}}.boot-bar{width:min(240px,70vw);height:10px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden}.boot-bar i{display:block;height:100%;width:40%;border-radius:999px;background:linear-gradient(90deg,#7c5cff,#ffcf3d);animation:bootrun 1.2s ease-in-out infinite}@keyframes bootrun{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}</style>
+  <main id="app"><div class="boot"><svg class="boot-logo" width="96" height="96" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">  <rect width="64" height="64" rx="16" fill="#ffcf3d"/>  <rect x="17" y="9" width="30" height="46" rx="7" fill="#17112e"/>  <rect x="27" y="13" width="10" height="2.5" rx="1.25" fill="#3a2e6b"/>  <rect x="21" y="30" width="11" height="3.6" rx="1.4" fill="#2fd6c1"/>  <rect x="24.7" y="26.2" width="3.6" height="11" rx="1.4" fill="#2fd6c1"/>  <circle cx="39" cy="28.5" r="2.6" fill="#ff5c8a"/>  <circle cx="39" cy="36" r="2.6" fill="#ffcf3d"/>  <rect x="27" y="46" width="10" height="3" rx="1.5" fill="#3a2e6b"/></svg><div>SAFIO Quizz</div><div class="boot-bar"><i></i></div></div></main>
   <div id="toast" hidden></div>
   <script src="/socket.io/socket.io.js"></script>
   <script src="i18n.js"></script>

@@ -1,4 +1,4 @@
-// SAFIO TV (Quizz) : tests de bout en bout par sockets, sur un vrai serveur.
+// SAFIO TV (Quiz) : tests de bout en bout par sockets, sur un vrai serveur.
 // Le « canari » vérifie, à chaque étape de parties simulées dans les 8 jeux, que tout texte envoyé
 // à la télé est déjà visible par CHAQUE joueur. Une fuite de secret (Mytho, Torpille…) ferait échouer le test.
 const { test, before, after } = require("node:test");

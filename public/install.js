@@ -2,7 +2,7 @@
 // Tout élément [data-install] ouvre l'aide (étapes iPhone / Android, bouton direct sur Android).
 (function () {
   "use strict";
-  var NAME = "SAFIO Quizz";
+  var NAME = "SAFIO Quiz";
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () { navigator.serviceWorker.register("/sw.js").catch(function () {}); });
   }

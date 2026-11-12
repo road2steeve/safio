@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "SAFIO Quizz",
-  "short_name": "SAFIO Quizz",
+  "name": "SAFIO Quiz",
+  "short_name": "SAFIO Quiz",
   "description": "Jeux de soirée multijoueurs sur téléphone. Gratuit, sans inscription.",
   "lang": "fr",
   "start_url": "/?source=app",

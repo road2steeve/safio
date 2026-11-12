@@ -190,7 +190,7 @@ body.pointer { cursor: default; }
 .chat { transition: opacity .3s; }
 body.bannering .chat { opacity: 0; }
 
-/* ---------- SAFIO Quizz : avatars, logo, scène de question ---------- */
+/* ---------- SAFIO Quiz : avatars, logo, scène de question ---------- */
 .av { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; flex: none; line-height: 1; box-shadow: 0 6px 18px rgba(0, 0, 0, .35), inset 0 -6px 0 rgba(0, 0, 0, .15); }
 .logo { display: inline-flex; } .logo svg { width: 100%; height: 100%; }
 .brand .qzname { background: var(--cool); -webkit-background-clip: text; background-clip: text; color: transparent; }

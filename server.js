@@ -4,6 +4,8 @@ const http = require("http");
 const express = require("express");
 const { Server } = require("socket.io");
 const QRCode = require("qrcode");
+const compression = require("compression");
+const fs = require("fs");
 const qa = require("./games/qa");
 const bac = require("./games/bac");
 const party = require("./games/party");
@@ -31,6 +33,26 @@ const io = new Server(server, { pingInterval: 10000, pingTimeout: 20000 });
 
 // Signature SAFIO : l'écran de chargement (sw.js) sait ainsi que c'est bien le jeu qui répond.
 app.use((req, res, next) => { res.setHeader("X-Safio", "1"); next(); });
+app.use(compression());
+// Page d'accueil : titre, description et aperçu de partage dans la langue demandée (?lang=, transmis par le portail),
+// pour les moteurs de recherche et les aperçus de liens. Le français reste la langue par défaut.
+const HOME_META = {
+  fr: null,
+  en: ["en", "en_GB", "SAFIO Quiz – Free quiz and music quiz with friends on your phone", "Free multiplayer quiz: general knowledge, word games, a music quiz with your own music. Everyone plays on their phone, no account, no app. Scan the QR code!"],
+  es: ["es", "es_ES", "SAFIO Quiz – Trivial y blind test gratis con amigos en el móvil", "Quiz multijugador gratis: cultura general, juegos de palabras, blind test con tu música. Cada uno juega en su móvil, sin registro ni app. ¡Escanea el código QR!"],
+  nl: ["nl", "nl_BE", "SAFIO Quiz – Gratis quiz en muziekquiz met vrienden op je gsm", "Gratis multiplayerquiz: algemene kennis, Stad-land-rivier, een muziekquiz met je eigen muziek. Iedereen speelt op zijn telefoon, zonder account of app. Scan de QR-code!"],
+  de: ["de", "de_DE", "SAFIO Quiz – Kostenloses Quiz und Musikquiz mit Freunden auf dem Handy", "Kostenloses Multiplayer-Quiz: Allgemeinwissen, Stadt, Land, Fluss, Musikquiz mit deiner eigenen Musik. Jeder spielt auf seinem Handy, ohne Konto und ohne App. QR-Code scannen!"],
+};
+const HOME_FILE = path.join(__dirname, "public", "index.html");
+const HOME_FR = fs.readFileSync(HOME_FILE, "utf8");
+const FR_TITLE = /<title>([^<]*)<\/title>/.exec(HOME_FR)[1];
+const FR_DESC = /<meta name="description" content="([^"]*)"/.exec(HOME_FR)[1];
+const homeFor = (m) => HOME_FR.replace('<html lang="fr">', `<html lang="${m[0]}">`).split(FR_TITLE).join(m[2]).split(FR_DESC).join(m[3]).replace('content="fr_BE"', `content="${m[1]}"`);
+const HOME_HTML = Object.fromEntries(Object.entries(HOME_META).map(([l, m]) => [l, m ? homeFor(m) : HOME_FR]));
+app.get(["/", "/index.html"], (req, res) => {
+  const lang = String(req.query.lang || "").slice(0, 2);
+  res.type("html").set("Cache-Control", "no-cache").send(HOME_HTML[lang] || HOME_FR);
+});
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/flags", express.static(path.join(path.dirname(require.resolve("flag-icons/package.json")), "flags", "4x3"), { maxAge: "7d" }));
 app.get("/qr", async (req, res) => {

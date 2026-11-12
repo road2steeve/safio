@@ -1,11 +1,11 @@
-// SAFIO Quizz – Cloudflare Worker « écran de chargement » (route : quiz.playsafio.com/*).
+// SAFIO Quiz – Cloudflare Worker « écran de chargement » (route : quiz.playsafio.com/*).
 // Gratuit (offre Workers Free). Le jeu est hébergé sur l'offre gratuite de Render, qui l'endort
 // après 15 minutes sans visite. Ce Worker répond tout de suite, même à la toute première visite :
 // si le jeu ne répond pas en 2,5 s, ou si ce n'est pas encore lui (en-tête X-Safio absent),
 // il affiche l'écran SAFIO (logo + barre qui avance), qui recharge la page dès que le jeu est prêt.
 // Tout le reste (images, scripts, connexion temps réel) passe directement au jeu.
 var LOGO = "<svg class=\"logo\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\">  <rect width=\"64\" height=\"64\" rx=\"16\" fill=\"#ffcf3d\"/>  <rect x=\"17\" y=\"9\" width=\"30\" height=\"46\" rx=\"7\" fill=\"#17112e\"/>  <rect x=\"27\" y=\"13\" width=\"10\" height=\"2.5\" rx=\"1.25\" fill=\"#3a2e6b\"/>  <rect x=\"21\" y=\"30\" width=\"11\" height=\"3.6\" rx=\"1.4\" fill=\"#2fd6c1\"/>  <rect x=\"24.7\" y=\"26.2\" width=\"3.6\" height=\"11\" rx=\"1.4\" fill=\"#2fd6c1\"/>  <circle cx=\"39\" cy=\"28.5\" r=\"2.6\" fill=\"#ff5c8a\"/>  <circle cx=\"39\" cy=\"36\" r=\"2.6\" fill=\"#ffcf3d\"/>  <rect x=\"27\" y=\"46\" width=\"10\" height=\"3\" rx=\"1.5\" fill=\"#3a2e6b\"/></svg>";
-var NAME = 'SAFIO Quizz';
+var NAME = 'SAFIO Quiz';
 
 var TX = {
   fr: ['Ouverture de', 'Le jeu se réveille, encore quelques secondes…', 'Presque prêt ! Le premier lancement peut prendre jusqu’à une minute.'],

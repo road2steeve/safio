@@ -39,7 +39,12 @@
     ".si button{font:inherit;font-weight:800;border:0;border-radius:999px;cursor:pointer;min-height:46px;padding:0 20px}" +
     ".si .si-go{width:100%;color:#fff;background:linear-gradient(120deg,#7c5cff,#22d3c5);margin-bottom:4px}" +
     ".si .si-x{display:block;margin:18px auto 0;background:rgba(255,255,255,.1);color:#eef1ff}";
-  var st = document.createElement("style"); st.textContent = CSS; (document.head || document.documentElement).appendChild(st);
+  var CSS2 = ".safio-links{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:22px auto 8px;padding:0 16px;max-width:760px}" +
+    ".safio-link{flex:1 1 220px;display:flex;align-items:center;justify-content:center;gap:8px;min-height:54px;padding:0 20px;border-radius:999px;font-weight:800;font-size:17px;text-decoration:none;color:#fff;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.22);transition:transform .2s,background .2s}" +
+    ".safio-link:hover{transform:translateY(-2px);background:rgba(255,255,255,.14)}" +
+    ".safio-link--install{border:0;color:#fff;background:linear-gradient(120deg,#7c5cff,#22d3c5);box-shadow:0 10px 26px rgba(124,92,255,.35)}" +
+    ".is-app .safio-links .safio-link{flex-basis:100%}";
+  var st = document.createElement("style"); st.textContent = CSS + CSS2; (document.head || document.documentElement).appendChild(st);
 
   var bg = null;
   function close() { if (bg) { bg.remove(); bg = null; } }

@@ -412,6 +412,7 @@ function renderHome() {
     </div>
   </section>
 
+  <div class="safio-links"><a class="safio-link safio-link--install" href="#" data-install>${({ fr: "📲 Installer l’appli", en: "📲 Install the app", es: "📲 Instalar la app" })[lang] || ({ fr: "📲 Installer l’appli", en: "📲 Install the app", es: "📲 Instalar la app" }).fr}</a><a class="safio-link" href="https://playsafio.com${({ en: "/en/", es: "/es/" })[lang] || "/"}">${t("universeLink")}</a></div>
   <section class="section" id="games">
     <div class="section-head"><div><h2>${t("gamesTitle")}</h2><p>${t("gamesSub")}</p></div>
       <div class="tabs" role="tablist">${cats.map((c) => `<button class="tab ${homeCat === c ? "on" : ""}" data-cat-tab="${c}" role="tab" aria-selected="${homeCat === c}">${t("cat_" + c)}</button>`).join("")}</div></div>

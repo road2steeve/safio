@@ -411,7 +411,7 @@ function renderHome() {
         <button class="btn primary" id="ctaCreate">🎉 ${t("ctaCreate")}</button>
         <button class="btn ghost" id="ctaJoin">🔑 ${t("ctaJoin")}</button>
       </div>
-      <p class="trust">${t("noSignup")}</p>
+      <p class="trust">${t("noSignup")}</p><p class="trust robix-pitch">${t("robix_pitch")}</p>
     </div>
     <div class="hero-deco">
       <div class="floaties"><span class="floaty" style="right:10px;top:0">🎲</span><span class="floaty" style="right:120px;top:-26px;animation-delay:-2s">⚡</span><span class="floaty" style="right:30px;top:330px;animation-delay:-4s">🏆</span></div>
@@ -633,8 +633,9 @@ function lobbyHTML() {
   return `<div class="lobby">
     <p class="host-banner">👑 ${t("hostPanel")}</p>
     ${invite}${crowd}
+    <div class="panel robix-box" id="robixBox"></div>
     <div class="panel"><p class="label">${t("chooseGame")}</p>
-      <div class="game-pick">${Object.keys(GAMES).map((id) => `<button class="gp ${G === id ? "on" : ""}" data-game="${id}">${ART[id]}<b>${GAMES[id].ico} ${gameName(id)}</b></button>`).join("")}</div></div>
+      <div class="game-pick">${Object.keys(GAMES).map((id) => `<button class="gp ${G === id ? "on" : ""}" data-game="${id}">${(S.robix || []).includes(id) ? `<span class="robix-tag">🤖</span>` : ""}${ART[id]}<b>${GAMES[id].ico} ${gameName(id)}</b></button>`).join("")}</div></div>
     ${howToHTML(G, false)}
     <div class="panel"><p class="label">${t("gameSettings")}</p><div class="settings">${settings}</div></div>
     <div class="startbar"><div class="status" id="startStatus"></div><button class="btn primary big" id="start">▶ ${t("startGame")}</button></div>
@@ -1034,17 +1035,36 @@ function bindRoom() {
 }
 const isTouch = () => matchMedia("(pointer: coarse)").matches;
 
+// Encart Robix du salon (organisateur) : compléter en un geste, ou expliquer pourquoi ce jeu se joue entre humains
+function renderRobix(robixOk, n) {
+  const box = $("#robixBox");
+  if (!box) return;
+  const bots = S.players.filter((p) => p.bot).length;
+  const missing = Math.max(0, (MIN_PLAYERS[S.game] || 2) - n);
+  const key = [S.game, robixOk, bots, missing, lang].join("|");
+  if (box.dataset.k === key) return;
+  box.dataset.k = key;
+  const others = (S.robix || []).filter((id) => GAMES[id]).map((id) => gameName(id)).join(", ");
+  box.innerHTML = `<p class="label">${t("robix_title")}</p>` + (robixOk
+    ? `<p class="muted small">${t("robix_desc")}</p>${bots ? `<p class="muted small">${t("robix_remove")}</p>` : ""}
+       ${missing > 0 ? `<button class="btn primary" data-addbot="${missing}">${t("robix_fill", { n: missing })}</button>` : `<button class="btn ghost small" data-addbot="1" ${bots >= 8 ? "disabled" : ""}>${t("robix_add")}</button>`}`
+    : `<p class="muted small">${t("robix_bench")}</p><p class="muted small">${t("robix_tryOthers")} ${esc(others)}.</p>`);
+  box.querySelectorAll("[data-addbot]").forEach((b) => (b.onclick = () => socket.emit("addBot", { n: +b.dataset.addbot, lang }, (r) => r && r.error && toast(t(r.error)))));
+}
+
 // Parties qui changent sans reconstruire l'écran (joueurs, compteur de réponses)
 function updateLive() {
   if (!S) return;
   const list = $("#players");
-  const conn = S.players.filter((p) => p.connected);
+  // Robix (joueurs robots) : ils ne comptent que pour les jeux qui les acceptent
+  const robixOk = (S.robix || []).includes(S.game);
+  const conn = S.players.filter((p) => p.connected && (!p.bot || robixOk || S.phase !== "lobby"));
   if (list) {
     const ranked = [...S.players].sort((a, b) => b.score - a.score);
     $("#nbPlayers").textContent = S.players.length;
     list.innerHTML = ranked.map((p, i) => `
       <div class="player ${p.connected ? "" : "off"} ${S.phase === "play" && (S.answered || []).includes(p.pid) ? "done" : ""}">
-        ${S.phase !== "lobby" ? `<span class="rk">${i + 1}</span>` : ""}${avHTML(p, "sm")}<span class="nm">${esc(p.name)}${p.pid === pid ? ` (${t("you")})` : ""}</span>${lvlTag(p)}
+        ${S.phase !== "lobby" ? `<span class="rk">${i + 1}</span>` : ""}${avHTML(p, "sm")}<span class="nm">${esc(p.name)}${p.pid === pid ? ` (${t("you")})` : ""}</span>${p.bot ? "" : lvlTag(p)}
         ${p.pid === S.hostPid && !S.auto ? `<span class="tag host">${t("hostLbl")}</span>` : ""}
         ${S.phase === "lobby" && p.ready && p.pid !== S.hostPid ? `<span class="tag ready">${t("readyTag")}</span>` : ""}
         ${!p.connected ? `<span class="tag">${t("offlineTag")}</span>` : ""}
@@ -1060,13 +1080,15 @@ function updateLive() {
   // Lobby : foule de joueurs, statut « prêt », barre de lancement
   const crowd = $("#crowd");
   if (crowd) {
-    const slots = Math.max(0, (MIN_PLAYERS[S.game] || 2) - S.players.length);
-    crowd.innerHTML = S.players.map((p) => `<div class="bubble ${p.ready || p.pid === S.hostPid ? "ready" : ""} ${p.connected ? "" : "off"}" ${p.pid === pid && !isHost() ? 'data-edit-me="1" style="cursor:pointer"' : ""}>
-        ${p.pid === S.hostPid ? `<span class="crown">👑</span>` : ""}${avHTML(p)}<span class="bn">${esc(p.name)}</span>${lvlTag(p)}
-        <span class="st">${p.pid === S.hostPid ? t("hostLbl") : p.ready ? "✓ " + t("readyTag") : t("waitingTag")}</span></div>`).join("")
+    const slots = Math.max(0, (MIN_PLAYERS[S.game] || 2) - conn.length);
+    crowd.innerHTML = S.players.map((p) => `<div class="bubble ${p.bot ? (robixOk ? "bot ready" : "bot off") : p.ready || p.pid === S.hostPid ? "ready" : ""} ${p.connected ? "" : "off"}" ${p.pid === pid && !isHost() ? 'data-edit-me="1" style="cursor:pointer"' : ""}>
+        ${p.pid === S.hostPid ? `<span class="crown">👑</span>` : ""}${p.bot && isHost() ? `<button class="x bot-x" data-unbot="${p.pid}" aria-label="✕">✕</button>` : ""}${avHTML(p)}<span class="bn">${esc(p.name)}</span>${p.bot ? "" : lvlTag(p)}
+        <span class="st">${p.bot ? (robixOk ? "🤖 " + t("robix_tag") : t("robix_benchTag")) : p.pid === S.hostPid ? t("hostLbl") : p.ready ? "✓ " + t("readyTag") : t("waitingTag")}</span></div>`).join("")
       + Array.from({ length: slots }, () => `<div class="bubble empty"><span class="avt">+</span><span class="bn muted">…</span></div>`).join("");
     crowd.querySelectorAll("[data-edit-me]").forEach((b) => (b.onclick = openProfile));
+    crowd.querySelectorAll("[data-unbot]").forEach((b) => (b.onclick = () => socket.emit("kick", b.dataset.unbot)));
   }
+  renderRobix(robixOk, conn.length);
   const st = $("#startStatus");
   if (st) {
     const others = conn.filter((p) => p.pid !== S.hostPid);

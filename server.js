@@ -29,6 +29,8 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { pingInterval: 10000, pingTimeout: 20000 });
 
+// Signature SAFIO : l'écran de chargement (sw.js) sait ainsi que c'est bien le jeu qui répond.
+app.use((req, res, next) => { res.setHeader("X-Safio", "1"); next(); });
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/flags", express.static(path.join(path.dirname(require.resolve("flag-icons/package.json")), "flags", "4x3"), { maxAge: "7d" }));
 app.get("/qr", async (req, res) => {

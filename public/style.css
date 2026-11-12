@@ -593,3 +593,11 @@ span.mark { cursor: default; }
 @media (max-width: 520px) { .lang__code { display: none; } }
 /* Question pas encore traduite dans la langue du joueur */
 .fr-note { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; font-size: 12px; font-weight: 600; color: var(--muted); }
+/* Robix (joueurs robots) */
+.bubble.bot .avt { box-shadow: 0 0 0 4px var(--bg2), 0 0 0 7px var(--turq); outline: 2px dashed var(--turq); outline-offset: 6px; }
+.bubble.bot.off .avt { box-shadow: none; outline: none; }
+.bubble .bot-x { position: absolute; top: -6px; right: 2px; z-index: 2; width: 24px; height: 24px; border-radius: 50%; padding: 0; font-size: 12px; }
+.robix-box { display: grid; gap: 10px; border: 1.5px dashed var(--turq); }
+.robix-box p { margin: 0; }
+.gp .robix-tag { position: absolute; top: 6px; right: 6px; z-index: 1; background: rgba(0, 0, 0, .55); border-radius: 999px; padding: 1px 7px; font-size: 13px; }
+.trust.robix-pitch { color: var(--turq); font-weight: 800; }

@@ -18,6 +18,7 @@ const stats = require("./lib/stats");
 const statsPage = require("./lib/statspage");
 const { createTv } = require("./lib/tv");
 const { THEMES } = require("./data/questions");
+const robix = require("./lib/robix");
 
 const GAMES = {
   quiz: qa.quiz, mytho: party.mytho, bac, duel: qa.duel,
@@ -86,6 +87,7 @@ const QUICK = { count: 7, time: 10, theme: "all" };
 
 const cleanSettings = (game, s = {}) => GAMES[game].clean(s, GAMES[game].defaults);
 const connected = (room) => [...room.players.values()].filter((p) => p.connected);
+const humans = (room) => [...room.players.values()].filter((p) => !p.bot);
 
 function newRoom(game, hostPid, extra = {}) {
   const r = { code: newCode(), game, hostPid, phase: "lobby", settings: cleanSettings(game), players: new Map(), g: null, timer: null, createdAt: Date.now(), ...extra };
@@ -156,7 +158,8 @@ function viewOf(room, pid) {
     code: room.code, hostPid: room.hostPid, game: room.game, phase: room.phase, solo: !!room.solo, auto: !!room.auto,
     settings: room.settings, now: Date.now(), result: room.result, coval: room.coval || [],
     recap: room.phase === "final" ? room.recap || null : null,
-    players: [...room.players.values()].map((p) => ({ pid: p.pid, name: p.name, avatar: p.avatar, ac: p.ac || 0, lvl: levelOf(p.xp || 0), ready: !!p.ready, score: p.score, connected: p.connected })),
+    players: [...room.players.values()].map((p) => ({ pid: p.pid, name: p.name, avatar: p.avatar, ac: p.ac || 0, lvl: levelOf(p.xp || 0), ready: !!p.ready, score: p.score, connected: p.connected, ...(p.bot ? { bot: true } : {}) })),
+    robix: robix.GAMES,
   };
   if (room.screens && room.screens.size) Object.assign(v, tv.playerInfo(room));
   if (room.phase === "final" && room.xpGain && room.xpGain[pid]) v.xp = { id: room.xpId, ...room.xpGain[pid] };
@@ -173,11 +176,38 @@ function viewOf(room, pid) {
 function broadcast(room) {
   for (const p of room.players.values()) if (p.socketId) io.to(p.socketId).emit("state", viewOf(room, p.pid));
   tv.broadcastTv(room);
+  botTick(room);
+}
+// ---------- Robix (joueurs robots) ----------
+// Après chaque changement, chaque Robix regarde s'il a quelque chose à faire et le fait après un délai « humain ».
+// Au moment d'agir, il revérifie (la manche a pu se terminer pendant qu'il réfléchissait).
+function botTick(room) {
+  const brain = robix.ROBIX[room.game];
+  if (!brain || !room.g || room.phase !== "play" || !rooms.has(room.code)) return;
+  for (const b of room.players.values()) {
+    if (!b.bot || !b.connected || b.botTimer) continue;
+    let mv;
+    try { mv = brain(room, b); } catch (e) { console.error("[robix]", e); }
+    if (!mv) continue;
+    const g0 = room.g;
+    b.botTimer = setTimeout(() => {
+      b.botTimer = null;
+      if (!rooms.has(room.code) || room.g !== g0 || room.phase !== "play" || !room.players.has(b.pid)) return;
+      let now;
+      try { now = brain(room, b); } catch (e) { console.error("[robix]", e); }
+      if (!now) return botTick(room);
+      try { GAMES[room.game].act(room, b.pid, now.d, ctx, () => {}); } catch (e) { console.error("[robix]", e); }
+    }, Math.max(300, mv.wait || 1500));
+  }
+}
+function stopBots(room) {
+  for (const b of room.players.values()) if (b.botTimer) { clearTimeout(b.botTimer); b.botTimer = null; }
 }
 const tv = createTv({ io, rooms, newRoom, viewOf });
 // Supprime un salon (et prévient ses écrans TV)
 function dropRoom(room) {
   clearTimer(room);
+  stopBots(room);
   rooms.delete(room.code);
   tv.roomGone(room);
 }
@@ -226,7 +256,7 @@ const ctx = {
   // thèmes et difficultés équilibrés, jamais deux questions sœurs, jamais une question déjà posée dans la salle.
   pickQuestions(room, pool, n) {
     room.seen = room.seen || new Set();
-    const ps = [...room.players.values()].filter((p) => p.connected !== false);
+    const ps = [...room.players.values()].filter((p) => p.connected !== false && !p.bot);
     const list = pick(pool, n, { players: ps, roomSeen: room.seen, qid });
     const ids = list.map((o) => o.id);
     for (const o of list) room.seen.add(o.x);
@@ -243,7 +273,9 @@ const ctx = {
 
 const modeOf = (room) => (room.solo ? "solo" : room.quick ? "quick" : "room");
 function startGame(room) {
-  for (const p of room.players.values()) { p.score = 0; p.ready = false; }
+  // Un jeu sans Robix (Petit Bac, Blind Test…) : ils restent sur le banc (hors ligne le temps de la partie)
+  const withBots = !!robix.ROBIX[room.game];
+  for (const p of room.players.values()) { p.score = 0; p.ready = !!p.bot; if (p.bot) { p.connected = withBots; if (p.botTimer) { clearTimeout(p.botTimer); p.botTimer = null; } } }
   stats.hit("start", { game: room.game, mode: modeOf(room), n: connected(room).length });
   room.result = null;
   room.recap = null;
@@ -417,6 +449,7 @@ io.on("connection", (socket) => {
       room.settings = cleanSettings(game);
     } else room.settings = cleanSettings(room.game, { ...room.settings, ...settings });
     room.phase = "lobby";
+    for (const p of room.players.values()) if (p.bot) { p.connected = true; p.ready = true; } // Robix revenus du banc
     broadcast(room);
   });
 
@@ -424,9 +457,10 @@ io.on("connection", (socket) => {
     const room = R();
     if (!isHost() || (room.phase !== "lobby" && room.phase !== "final")) return;
     const min = GAMES[room.game].minPlayers || 1;
-    if (connected(room).length < min) return cb && cb({ error: "err_min", min });
+    const playing = connected(room).filter((p) => !p.bot || robix.ROBIX[room.game]).length + (robix.ROBIX[room.game] ? [...room.players.values()].filter((p) => p.bot && !p.connected).length : 0);
+    if (playing < min) return cb && cb({ error: "err_min", min });
     const max = MAX_PLAYERS[room.game] || ROOM_MAX;
-    if (connected(room).length > max) return cb && cb({ error: "err_max", max });
+    if (playing > max) return cb && cb({ error: "err_max", max });
     if (room.solo) {
       room.settings = cleanSettings("duel", { ...SOLO, theme: room.settings.theme });
     }
@@ -453,9 +487,10 @@ io.on("connection", (socket) => {
     const room = R();
     if (!isHost() || room.auto) return;
     clearTimer(room);
+    stopBots(room);
     room.phase = "lobby";
     room.g = null;
-    for (const p of room.players.values()) p.ready = false;
+    for (const p of room.players.values()) { p.ready = !!p.bot; if (p.bot) p.connected = true; }
     broadcast(room);
   });
 
@@ -484,13 +519,26 @@ io.on("connection", (socket) => {
     broadcast(room);
   });
 
+  // Robix : l'organisateur ajoute des joueurs robots (pas en solo ni en partie rapide)
+  socket.on("addBot", ({ n, lang } = {}, cb) => {
+    const room = R();
+    if (!room || !isHost() || room.auto || room.solo || (room.phase !== "lobby" && room.phase !== "final")) return cb && cb({ error: "err_generic" });
+    const bots = [...room.players.values()].filter((p) => p.bot).length;
+    const k = Math.min(Math.max(1, Math.floor(+n) || 1), robix.MAX - bots, ROOM_MAX - room.players.size);
+    if (k <= 0) return cb && cb({ error: bots >= robix.MAX ? "err_robixMax" : "err_full" });
+    for (let i = 0; i < k; i++) { const b = robix.makeBot(room, lang); room.players.set(b.pid, b); }
+    broadcast(room);
+    cb && cb({ ok: true });
+  });
+
   socket.on("kick", (pid) => {
     const room = R();
     if (!isHost() || pid === ME().pid) return;
     const p = room.players.get(pid);
     if (!p) return;
+    if (p.botTimer) clearTimeout(p.botTimer);
     room.players.delete(pid);
-    (room.banned ||= new Set()).add(pid); // retiré par l'hôte : il ne peut pas revenir dans ce salon
+    if (!p.bot) (room.banned ||= new Set()).add(pid); // retiré par l'hôte : il ne peut pas revenir dans ce salon
     const ks = p.socketId && io.sockets.sockets.get(p.socketId);
     if (ks) {
       ks.emit("kicked");
@@ -507,6 +555,8 @@ io.on("connection", (socket) => {
     socket.leave(room.code);
     socket.data.room = socket.data.me = null;
     handleHostGone(room);
+    // Plus aucun humain : les Robix ne jouent pas seuls
+    if (!humans(room).length) { stopBots(room); room.players.clear(); }
     if (room.players.size === 0) {
       // Une télé est encore allumée : la salle redevient une salle d'accueil vide, prête pour d'autres joueurs
       if (tv.hasScreen(room)) { clearTimer(room); room.phase = "lobby"; room.g = null; room.hostPid = null; broadcast(room); }
@@ -529,7 +579,7 @@ io.on("connection", (socket) => {
 
 function handleHostGone(room, force) {
   if (!force && room.players.has(room.hostPid)) return;
-  const next = connected(room).find((p) => p.pid !== room.hostPid);
+  const next = connected(room).find((p) => p.pid !== room.hostPid && !p.bot);
   if (next) {
     room.hostPid = next.pid;
     broadcast(room);
@@ -541,7 +591,7 @@ setInterval(() => {
   const now = Date.now();
   for (const [k, f] of joinFails) if (now - f.t >= JOIN_WINDOW) joinFails.delete(k);
   for (const [code, r] of rooms) {
-    if (connected(r).length || tv.keepAlive(r, now)) r.lastActive = now;
+    if (connected(r).some((p) => !p.bot) || tv.keepAlive(r, now)) r.lastActive = now;
     else if (now - (r.lastActive || now) > 30 * 60 * 1000 || r.players.size === 0) dropRoom(r);
     else r.lastActive = r.lastActive || now;
   }

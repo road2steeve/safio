@@ -123,6 +123,18 @@
     tv_on: "📺 Auf dem Fernseher",
     r_blindtest: "Der DJ startet einen Song in seiner Musik-App: Finde so schnell wie möglich den Titel, den Interpreten oder den Film. Je schneller du bist, desto mehr Punkte bekommst du.",
     contentFr: "Diese Frage gibt es noch nicht auf Deutsch: Sie wird auf Französisch angezeigt.",
+    // Robix (joueurs robots)
+    robix_pitch: "🤖 Nur zu zweit oder zu dritt? Füll mit Robix auf, unseren Roboterspielern: genauso lustig!",
+    robix_title: "🤖 Robix, die Roboterspieler",
+    robix_desc: "Zu wenige Leute? Hol dir Robix dazu: Roboterspieler, die mit euch antworten, abstimmen und punkten. Selbst zu zweit wird's ein Fest!",
+    robix_add: "➕ Einen Robix hinzufügen",
+    robix_fill: "🤖 Mit Robix auffüllen ({n})",
+    robix_tag: "Robix",
+    robix_benchTag: "auf der Bank",
+    robix_remove: "tippe auf ✕, um einen Robix zu entfernen",
+    robix_bench: "Dieses Spiel ist nur für Menschen: Die Robix schauen von der Bank aus zu.",
+    robix_tryOthers: "Mit Robix kannst du spielen:",
+    err_robixMax: "Maximal 8 Robix pro Raum.",
   },
   themes: {
     random: "Zufall", all: "Alle Themen", general: "Allgemeinwissen", geo: "Geografie", hist: "Geschichte", sport: "Sport",

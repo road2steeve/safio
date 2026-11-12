@@ -123,6 +123,18 @@
     tv_on: "📺 Op de tv",
     r_blindtest: "De dj start een nummer in zijn muziekapp: vind zo snel mogelijk de titel, de artiest of de film. Hoe sneller je bent, hoe meer punten je wint.",
     contentFr: "Deze vraag bestaat nog niet in het Nederlands: ze wordt in het Frans getoond.",
+    // Robix (joueurs robots)
+    robix_pitch: "🤖 Maar met 2 of 3? Vul aan met Robix, onze robotspelers: net zo leuk!",
+    robix_title: "🤖 Robix, de robotspelers",
+    robix_desc: "Te weinig volk? Voeg Robix toe: robotspelers die antwoorden, stemmen en punten scoren met jullie. Zelfs met 2 is het feest!",
+    robix_add: "➕ Een Robix toevoegen",
+    robix_fill: "🤖 Aanvullen met Robix ({n})",
+    robix_tag: "Robix",
+    robix_benchTag: "op de bank",
+    robix_remove: "tik op ✕ om een Robix te verwijderen",
+    robix_bench: "Dit spel is alleen voor mensen: de Robix kijken toe vanaf de bank.",
+    robix_tryOthers: "Met Robix kun je spelen:",
+    err_robixMax: "Maximaal 8 Robix per kamer.",
   },
   themes: {
     random: "Willekeurig", all: "Alle thema's", general: "Algemene kennis", geo: "Aardrijkskunde", hist: "Geschiedenis", sport: "Sport",

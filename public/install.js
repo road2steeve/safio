@@ -13,15 +13,15 @@
   window.addEventListener("appinstalled", function () { deferred = null; close(); });
 
   var TX = {
-    fr: { title: "Installe " + NAME + " sur ton téléphone", sub: "Une icône sur ton écran d’accueil, comme une vraie appli. Gratuit, sans store.",
+    fr: { tip2: "💡 <b>Chaque jeu SAFIO a sa propre icône.</b> Si tu vois une croix <b>✕</b> en haut de l’écran (jeu ouvert depuis l’icône SAFIO), ouvre d’abord ce jeu dans ton navigateur : touche la boussole <b>🧭</b> en bas (iPhone) ou <b>⋮</b> puis « Ouvrir dans Chrome » (Android). Ensuite, suis les étapes ci-dessous.", title: "Installe " + NAME + " sur ton téléphone", sub: "Une icône sur ton écran d’accueil, comme une vraie appli. Gratuit, sans store.",
       btn: "Installer maintenant", ios: "Sur iPhone / iPad", android: "Sur Android", close: "Fermer",
       iosSteps: ["Ouvre <b>{host}</b> dans <b>Safari</b>.", "Touche <b>Partager</b> <span class=\"si-ico\">⬆︎</span> (iPhone récent : touche d’abord <b>•••</b>).", "Choisis <b>« Sur l’écran d’accueil »</b>.", "Touche <b>« Ajouter »</b>. Et voilà !"],
       androidSteps: ["Ouvre <b>{host}</b> dans <b>Chrome</b>.", "Touche le menu <b>⋮</b> en haut à droite.", "Choisis <b>« Installer l’application »</b> ou <b>« Ajouter à l’écran d’accueil »</b>.", "Confirme. Et voilà !"] },
-    en: { title: "Install " + NAME + " on your phone", sub: "An icon on your home screen, just like a real app. Free, no app store.",
+    en: { tip2: "💡 <b>Each SAFIO game has its own icon.</b> If you see an <b>✕</b> at the top of the screen (game opened from the SAFIO icon), first open this game in your browser: tap the compass <b>🧭</b> at the bottom (iPhone) or <b>⋮</b> then “Open in Chrome” (Android). Then follow the steps below.", title: "Install " + NAME + " on your phone", sub: "An icon on your home screen, just like a real app. Free, no app store.",
       btn: "Install now", ios: "On iPhone / iPad", android: "On Android", close: "Close",
       iosSteps: ["Open <b>{host}</b> in <b>Safari</b>.", "Tap <b>Share</b> <span class=\"si-ico\">⬆︎</span> (recent iPhones: tap <b>•••</b> first).", "Choose <b>“Add to Home Screen”</b>.", "Tap <b>“Add”</b>. That’s it!"],
       androidSteps: ["Open <b>{host}</b> in <b>Chrome</b>.", "Tap the <b>⋮</b> menu at the top right.", "Choose <b>“Install app”</b> or <b>“Add to Home screen”</b>.", "Confirm. That’s it!"] },
-    es: { title: "Instala " + NAME + " en tu móvil", sub: "Un icono en tu pantalla de inicio, como una app de verdad. Gratis, sin tienda.",
+    es: { tip2: "💡 <b>Cada juego SAFIO tiene su propio icono.</b> Si ves una <b>✕</b> arriba de la pantalla (juego abierto desde el icono SAFIO), abre primero este juego en tu navegador: toca la brújula <b>🧭</b> abajo (iPhone) o <b>⋮</b> y luego «Abrir en Chrome» (Android). Después, sigue los pasos de abajo.", title: "Instala " + NAME + " en tu móvil", sub: "Un icono en tu pantalla de inicio, como una app de verdad. Gratis, sin tienda.",
       btn: "Instalar ahora", ios: "En iPhone / iPad", android: "En Android", close: "Cerrar",
       iosSteps: ["Abre <b>{host}</b> en <b>Safari</b>.", "Toca <b>Compartir</b> <span class=\"si-ico\">⬆︎</span> (iPhone reciente: toca primero <b>•••</b>).", "Elige <b>«Añadir a pantalla de inicio»</b>.", "Toca <b>«Añadir»</b>. ¡Listo!"],
       androidSteps: ["Abre <b>{host}</b> en <b>Chrome</b>.", "Toca el menú <b>⋮</b> arriba a la derecha.", "Elige <b>«Instalar aplicación»</b> o <b>«Añadir a pantalla de inicio»</b>.", "Confirma. ¡Listo!"] },
@@ -38,6 +38,7 @@
     ".si-mine{border:2px solid #22d3c5;border-radius:16px;padding:4px 12px 12px;margin-top:12px}" +
     ".si button{font:inherit;font-weight:800;border:0;border-radius:999px;cursor:pointer;min-height:46px;padding:0 20px}" +
     ".si .si-go{width:100%;color:#fff;background:linear-gradient(120deg,#7c5cff,#22d3c5);margin-bottom:4px}" +
+    ".si .si-tip{margin:0 0 4px;padding:10px 12px;border-radius:14px;background:rgba(255,211,77,.1);border:1px dashed rgba(255,211,77,.45);color:#eef1ff;font-size:15px}" +
     ".si .si-x{display:block;margin:18px auto 0;background:rgba(255,255,255,.1);color:#eef1ff}";
   var CSS2 = ".safio-links{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:22px auto 8px;padding:0 16px;max-width:760px}" +
     ".safio-link{flex:1 1 220px;display:flex;align-items:center;justify-content:center;gap:8px;min-height:54px;padding:0 20px;border-radius:999px;font-weight:800;font-size:17px;text-decoration:none;color:#fff;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.22);transition:transform .2s,background .2s}" +
@@ -61,7 +62,7 @@
     var blocks = ios ? block("ios", true) + block("android") : /Android/.test(ua) ? block("android", true) + block("ios") : block("ios") + block("android");
     bg = document.createElement("div"); bg.className = "si-bg";
     bg.innerHTML = '<div class="si" role="dialog" aria-modal="true" aria-label="' + t.title + '"><h2>📲 ' + t.title + "</h2><p>" + t.sub + "</p>" +
-      (deferred ? '<button type="button" class="si-go">' + t.btn + "</button>" : "") + blocks +
+      (deferred ? '<button type="button" class="si-go">' + t.btn + "</button>" : "") + '<p class="si-tip">' + t.tip2 + "</p>" + blocks +
       '<button type="button" class="si-x">' + t.close + "</button></div>";
     bg.addEventListener("click", function (e) {
       if (e.target === bg || e.target.classList.contains("si-x")) close();

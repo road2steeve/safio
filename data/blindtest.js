@@ -206,6 +206,29 @@ const SONGS = {
   ],
 };
 
+// Langues ajoutées (néerlandais, allemand…) : noms locaux dans data/i18n/<langue>/blindtest.js
+// (clé = nom anglais). Sans nom local, on garde le nom anglais (titre original).
+{
+  const fs = require("fs"), path = require("path"), I18N = require("./i18n");
+  for (const lang of I18N.LANGS) {
+    const f = path.join(__dirname, "i18n", lang, "blindtest.js");
+    const D = fs.existsSync(f) ? require(f) : {};
+    for (const s of Object.values(SONGS).flat()) {
+      for (const k of ["t", "w"]) {
+        const o = s[k];
+        if (!o || typeof o !== "object") continue;
+        const loc = ((k === "t" ? D.titles : D.works) || {})[o.en] || [];
+        o[lang] = loc[0] || o.en;
+        if (loc.length > 1) {
+          const key = k === "t" ? "alt" : "altW";
+          s[key] = [...new Set([...(s[key] || []), ...loc.slice(1)])];
+        }
+      }
+      for (const t of s.altW || []) if ((D.works || {})[t]) s.altW = [...new Set([...s.altW, ...D.works[t]])];
+    }
+  }
+}
+
 // On aplatit : chaque chanson connaît sa catégorie
 const ALL = [];
 for (const c of CATS) for (const s of SONGS[c]) { s.c = c; ALL.push(s); }

@@ -6,7 +6,7 @@ const { shuffle, norm, lev, clamp } = require("../lib/util");
 const FMTS = ["auto", "title", "artist", "both", "work"];
 const INPUTS = ["free", "choice", "buzz"];
 const FLASH_MS = 5000; // bonus éclair : bonne réponse en moins de 5 s
-const LANGS = ["fr", "en", "es"];
+const LANGS = ["fr", "en", "es", ...require("../data/i18n").LANGS];
 
 const vals = (x) => (x && typeof x === "object" ? LANGS.map((l) => x[l]).filter(Boolean) : x ? [x] : []);
 // « Titre (Remastered) » -> accepte aussi « Titre » ; « A feat. B » -> accepte aussi « A »

@@ -236,5 +236,6 @@ const closest = [
 // Langues ajoutées (néerlandais, allemand…) : traductions dans data/i18n/<langue>/
 const I18N = require("./i18n");
 I18N.applyQuiz(quiz);
+I18N.applyContent("closest", closest);
 
 module.exports = { THEMES, quiz, closest, META, withMeta };

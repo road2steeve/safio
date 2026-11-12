@@ -46,4 +46,33 @@ function applyQuiz(quiz) {
   return stats;
 }
 
-module.exports = { LANGS, contentId, applyQuiz, split };
+// Contenus des jeux de soirée, même principe (un fichier par jeu et par lot : <jeu>-<n>.js) :
+//   Au plus près  "id": ["question", "unité"]           (unité facultative)
+//   Mytho !       "id": ["phrase avec ___", "réponse / autre réponse acceptée"] (réponse facultative si identique partout)
+//   Même cerveau  "id": ["thème"]
+//   C'est toi !   "id": ["question complète"]
+function applyContent(prefix, list) {
+  const stats = {};
+  for (const lang of LANGS) {
+    const T = allOf(lang, prefix + "-");
+    let n = 0;
+    for (const x of list) {
+      const e = T[contentId(x)];
+      if (!e || !e[0]) continue;
+      if (prefix === "bluff") {
+        const answers = split(e[1]);
+        const shown = answers[0] || universal(x.show);
+        if (!shown) continue;
+        x.show[lang] = shown;
+        x.a = [...new Set([...x.a, ...answers])];
+      }
+      if (prefix === "closest" && x.u) x.u[lang] = e[1] != null ? e[1] : x.u.en;
+      x.q[lang] = e[0];
+      n++;
+    }
+    stats[lang] = n;
+  }
+  return stats;
+}
+
+module.exports = { LANGS, contentId, applyQuiz, applyContent, split };

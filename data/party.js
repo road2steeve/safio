@@ -144,4 +144,7 @@ const who = WHO.map(([fr, en, es]) => ({
   },
 }));
 
+// Langues ajoutées (néerlandais, allemand…) : traductions dans data/i18n/<langue>/
+{ const I18N = require("./i18n"); I18N.applyContent("bluff", bluff); I18N.applyContent("same", same); I18N.applyContent("who", who); }
+
 module.exports = { bluff, same, who };

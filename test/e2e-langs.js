@@ -176,6 +176,32 @@ async function audit(page, where) {
       await shot(P.Dieter, "q-bac-de.png");
       await shot(P.Bram, "q-bac-nl.png");
     });
+
+    // Lot 8 : les jeux de soirée affichent leurs contenus (pas seulement les boutons) dans la langue de chacun
+    for (const [game, label] of [["closest", "Au plus près"], ["mytho", "Mytho !"], ["brain", "Même cerveau"], ["youre", "C'est toi !"]]) {
+      await step(`${label} : la question s'affiche en néerlandais chez Bram et en allemand chez Dieter`, async () => {
+        await P.Alice.evaluate(() => socket.emit("lobby"));
+        await P.Alice.waitForSelector(`[data-game="${game}"]`);
+        await P.Alice.click(`[data-game="${game}"]`);
+        await wait(300);
+        await P.Alice.click("#start");
+        await P.Dieter.waitForSelector(".stage", { timeout: 9000 });
+        const lists = { closest: require("../data/questions").closest, mytho: require("../data/party").bluff, brain: require("../data/party").same, youre: require("../data/party").who };
+        const seen = (txt, lang) => lists[game].some((x) => txt.includes(String(x.q[lang]).split("___").map((f) => f.trim()).sort((a, b) => b.length - a.length)[0].slice(0, 40)));
+        let de = "", nl = "";
+        for (let i = 0; i < 20 && !(seen(de, "de") && seen(nl, "nl")); i++) {
+          await wait(300);
+          de = await P.Dieter.evaluate(() => document.querySelector(".stage")?.innerText || "");
+          nl = await P.Bram.evaluate(() => document.querySelector(".stage")?.innerText || "");
+        }
+        ok(seen(de, "de"), `${label} : question allemande attendue chez Dieter :\n${de.slice(0, 200)}`);
+        ok(seen(nl, "nl"), `${label} : question néerlandaise attendue chez Bram :\n${nl.slice(0, 200)}`);
+        ok(nl !== de, `${label} : textes différents`);
+        await audit(P.Dieter, `${label} de`);
+        await shot(P.Dieter, `q-${game}-de.png`);
+        await shot(P.Bram, `q-${game}-nl.png`);
+      });
+    }
   } catch (e) {
     process.exitCode = 1;
   } finally {

@@ -1,5 +1,5 @@
 // ======== Réglages faciles ========
-const APP_NAME = ["SAF", "IO", "Quizz"]; // le nom affiché (2e partie en dégradé) + la gamme SAFIO
+const APP_NAME = ["SAF", "IO", "Quiz"]; // le nom affiché (2e partie en dégradé) + la gamme SAFIO
 const AVATARS = ["🦊", "🐼", "🐸", "🐙", "🦁", "🐵", "🐧", "🦄", "🐯", "🐨", "🐷", "🐢", "🐳", "🦉", "🐝", "🦖", "👽", "🤖", "👻", "🎃", "😎", "🤠", "🥷", "🧙", "🌵", "🍕", "🍩", "🌈"];
 const GAMES = {
   quiz: { ico: "💡", color: "#3b82f6" },
@@ -154,7 +154,7 @@ const iDid = () => S && (S.answered || []).includes(pid);
 const joinUrl = (code) => `${location.origin}/?code=${code}`;
 const avColor = (i) => AV_COLORS[((i | 0) % AV_COLORS.length + AV_COLORS.length) % AV_COLORS.length];
 const avHTML = (p, cls = "") => `<span class="avt ${cls}" style="--c:${avColor(p.ac)}">${esc(p.avatar)}</span>`;
-const brandHTML = () => `<button class="brand" id="brand" aria-label="SAFIO Quizz">${LOGO_SVG}<h1><b class="nm">${APP_NAME[0]}<span>${APP_NAME[1]}</span></b><em class="line">${APP_NAME[2]}</em></h1></button>`;
+const brandHTML = () => `<button class="brand" id="brand" aria-label="SAFIO Quiz">${LOGO_SVG}<h1><b class="nm">${APP_NAME[0]}<span>${APP_NAME[1]}</span></b><em class="line">${APP_NAME[2]}</em></h1></button>`;
 const playerOf = (id) => (S && S.players.find((p) => p.pid === id)) || { name: "?", avatar: "❔", ac: 0 };
 const who = (id) => { const p = playerOf(id); return `<span class="who-in">${avHTML(p, "xs")}${esc(p.name)}</span>`; };
 function leaveLocal() { store.del("room"); S = null; local = "home"; screenKey = ""; history.replaceState(null, "", "/"); render(); }
@@ -451,7 +451,7 @@ function renderHome() {
     </div>
   </section>
   <p class="tv-hint">${t("tv_homeHint", { url: `<a href="/tv"><b>${esc(location.host)}/tv</b></a>` })}</p>
-  <footer class="footer">SAFIO Quizz · ${t("noSignup")}<br><a class="universe-link" href="https://playsafio.com${({ en: "/en/", es: "/es/", nl: "/nl/", de: "/de/" })[lang] || "/"}">${t("universeLink")}</a><br><a class="universe-link install-link" href="#" data-install>${({ fr: "📲 Installer l’appli sur ton téléphone", en: "📲 Install the app on your phone", es: "📲 Instala la app en tu móvil", nl: "📲 Installeer de app op je telefoon", de: "📲 Installiere die App auf deinem Handy" })[lang] || ({ fr: "📲 Installer l’appli sur ton téléphone", en: "📲 Install the app on your phone", es: "📲 Instala la app en tu móvil", nl: "📲 Installeer de app op je telefoon", de: "📲 Installiere die App auf deinem Handy" }).fr}</a></footer>`;
+  <footer class="footer">SAFIO Quiz · ${t("noSignup")}<br><a class="universe-link" href="https://playsafio.com${({ en: "/en/", es: "/es/", nl: "/nl/", de: "/de/" })[lang] || "/"}">${t("universeLink")}</a><br><a class="universe-link install-link" href="#" data-install>${({ fr: "📲 Installer l’appli sur ton téléphone", en: "📲 Install the app on your phone", es: "📲 Instala la app en tu móvil", nl: "📲 Installeer de app op je telefoon", de: "📲 Installiere die App auf deinem Handy" })[lang] || ({ fr: "📲 Installer l’appli sur ton téléphone", en: "📲 Install the app on your phone", es: "📲 Instala la app en tu móvil", nl: "📲 Installeer de app op je telefoon", de: "📲 Installiere die App auf deinem Handy" }).fr}</a></footer>`;
   bindNav();
   $("#avBtn").onclick = () => { avOpen = !avOpen; screenKey = ""; render(); };
   $$("[data-av]").forEach((b) => (b.onclick = () => { me.avatar = b.dataset.av; store.set("avatar", me.avatar); screenKey = ""; render(); }));

@@ -1,11 +1,11 @@
-// SAFIO – service worker (SAFIO Quizz) : application installable + écran de chargement.
+// SAFIO – service worker (SAFIO Quiz) : application installable + écran de chargement.
 // Sur l'offre gratuite de l'hébergeur, le jeu s'endort après un moment sans visite.
 // Au lieu de laisser un écran blanc ou celui de l'hébergeur, on affiche tout de suite
 // l'écran de chargement SAFIO (logo + barre qui avance) jusqu'à ce que le jeu soit prêt.
 // Le serveur du jeu ajoute l'en-tête « X-Safio » : sans lui, ce n'est pas encore le jeu.
 var CACHE = 'safio-quiz-v3';
 var LOGO = "<svg class=\"logo\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\">  <rect width=\"64\" height=\"64\" rx=\"16\" fill=\"#ffcf3d\"/>  <rect x=\"17\" y=\"9\" width=\"30\" height=\"46\" rx=\"7\" fill=\"#17112e\"/>  <rect x=\"27\" y=\"13\" width=\"10\" height=\"2.5\" rx=\"1.25\" fill=\"#3a2e6b\"/>  <rect x=\"21\" y=\"30\" width=\"11\" height=\"3.6\" rx=\"1.4\" fill=\"#2fd6c1\"/>  <rect x=\"24.7\" y=\"26.2\" width=\"3.6\" height=\"11\" rx=\"1.4\" fill=\"#2fd6c1\"/>  <circle cx=\"39\" cy=\"28.5\" r=\"2.6\" fill=\"#ff5c8a\"/>  <circle cx=\"39\" cy=\"36\" r=\"2.6\" fill=\"#ffcf3d\"/>  <rect x=\"27\" y=\"46\" width=\"10\" height=\"3\" rx=\"1.5\" fill=\"#3a2e6b\"/></svg>";
-var NAME = 'SAFIO Quizz';
+var NAME = 'SAFIO Quiz';
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll([]); }).catch(function () {}).then(function () { return self.skipWaiting(); }));
 });

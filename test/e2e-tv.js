@@ -1,4 +1,4 @@
-// SAFIO TV (Quizz) : parcours complet dans un vrai navigateur (une télé + des téléphones).
+// SAFIO TV (Quiz) : parcours complet dans un vrai navigateur (une télé + des téléphones).
 // Usage : node test/e2e-tv.js [dossier-captures]
 const { chromium } = require("playwright");
 const { spawn } = require("child_process");
@@ -152,7 +152,7 @@ const ok = (c, m) => { if (!c) throw new Error(m); };
     });
 
     ok(!errors.length, "erreurs JavaScript : " + errors.join(" | "));
-    console.log(`SAFIO Quizz TV : ${n} étapes vertes`);
+    console.log(`SAFIO Quiz TV : ${n} étapes vertes`);
   } catch (e) {
     if (errors.length) console.log("Erreurs navigateur :", errors.join("\n"));
     process.exitCode = 1;

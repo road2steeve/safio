@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /qr
+Disallow: /socket.io/
+Disallow: /tv
+
+# Portail SAFIO, plan du site et présentation : https://playsafio.com/sitemap.xml

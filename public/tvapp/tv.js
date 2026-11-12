@@ -1,4 +1,4 @@
-// SAFIO Quizz TV : écran collectif indépendant (télé, vidéoprojecteur, ordinateur branché à la télé).
+// SAFIO Quiz TV : écran collectif indépendant (télé, vidéoprojecteur, ordinateur branché à la télé).
 // La télé est le centre de la soirée : QR pour rejoindre, ambiance sonore, animations, classement, podium.
 // Elle ne joue pas : elle reçoit seulement la vue publique de la partie (« tv »).
 // JavaScript prudent (sans syntaxes récentes) pour les navigateurs des téléviseurs.
@@ -146,7 +146,7 @@
   };
   var catName = function (c) { return typeof BAC_CATS !== "undefined" && BAC_CATS[c] ? BAC_CATS[c][lang] || BAC_CATS[c].fr : c; };
   var COLORS = typeof AV_COLORS !== "undefined" ? AV_COLORS : ["#7c5cff"];
-  // Avatar du Quizz : un emoji sur une pastille de couleur
+  // Avatar du Quiz : un emoji sur une pastille de couleur
   var avatar = function (p, size) {
     p = p || {};
     var c = COLORS[(((p.ac | 0) % COLORS.length) + COLORS.length) % COLORS.length];
@@ -445,7 +445,7 @@
     stage.innerHTML = '<div class="scene ' + key.split(":")[0] + '">' + html + "</div>" + '<div class="chat" id="chat"></div>';
   }
   var top = function (right) {
-    return '<div class="top"><div class="brand">' + logo(72) + 'SAFIO <span class="qzname">Quizz</span> <span class="tvtag">TV</span></div><div class="grow"></div>' + (right || "") + "</div>";
+    return '<div class="top"><div class="brand">' + logo(72) + 'SAFIO <span class="qzname">Quiz</span> <span class="tvtag">TV</span></div><div class="grow"></div>' + (right || "") + "</div>";
   };
   var qr = function (url, size) { return '<div class="qrbox"><img src="/qr?u=' + encodeURIComponent(url) + '" width="' + size + '" height="' + size + '" alt="QR"></div>'; };
   var playerOf = function (pid) {

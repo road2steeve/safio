@@ -432,7 +432,7 @@ function renderHome() {
     </div>
   </section>
   <p class="tv-hint">${t("tv_homeHint", { url: `<a href="/tv"><b>${esc(location.host)}/tv</b></a>` })}</p>
-  <footer class="footer">SAFIO Quizz · ${t("noSignup")}<br><a class="universe-link" href="https://playsafio.com${({ en: "/en/", es: "/es/" })[lang] || "/"}">${t("universeLink")}</a></footer>`;
+  <footer class="footer">SAFIO Quizz · ${t("noSignup")}<br><a class="universe-link" href="https://playsafio.com${({ en: "/en/", es: "/es/" })[lang] || "/"}">${t("universeLink")}</a><br><a class="universe-link install-link" href="#" data-install>${({ fr: "📲 Installer l’appli sur ton téléphone", en: "📲 Install the app on your phone", es: "📲 Instala la app en tu móvil" })[lang] || ({ fr: "📲 Installer l’appli sur ton téléphone", en: "📲 Install the app on your phone", es: "📲 Instala la app en tu móvil" }).fr}</a></footer>`;
   bindNav();
   $("#avBtn").onclick = () => { avOpen = !avOpen; screenKey = ""; render(); };
   $$("[data-av]").forEach((b) => (b.onclick = () => { me.avatar = b.dataset.av; store.set("avatar", me.avatar); screenKey = ""; render(); }));

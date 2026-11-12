@@ -31,6 +31,9 @@ if (!okLang(lang)) lang = safioDetectLang(okLang);
 if (!okLang(lang)) lang = SAFIO_DEFAULT_LANG;
 if (safioUrlLang(okLang)) store.set("lang", lang);
 document.documentElement.lang = lang;
+// Source de la visite (lien de campagne ?utm_source=…, appli installée ?source=app, portail) : lue dans l'adresse,
+// jamais enregistrée sur l'appareil, envoyée seulement avec la création d'une salle (statistiques anonymes).
+const SRC = (() => { const q = new URLSearchParams(location.search); return (q.get("utm_source") || q.get("source") || (/^https:\/\/(www\.)?playsafio\.com\//.test(document.referrer) ? "portail" : document.referrer ? "autre-site" : "direct")).slice(0, 30); })();
 const t = (k, vars = {}) => String(T[lang][k] ?? T[SAFIO_DEFAULT_LANG][k] ?? k).replace(/\{(\w+)\}/g, (_, v) => vars[v] ?? "");
 // Contenu en plusieurs langues : la langue du joueur, sinon le français (langue de secours)
 const tr = (obj) => (obj && typeof obj === "object" ? obj[lang] ?? obj[SAFIO_DEFAULT_LANG] ?? obj.en ?? Object.values(obj)[0] : obj ?? "");
@@ -484,7 +487,7 @@ function renderHome() {
   $$("[data-cat-tab]").forEach((b) => (b.onclick = () => { homeCat = b.dataset.catTab; screenKey = ""; const y = scrollY; render(); scrollTo({ top: y }); }));
   const create = (game) => {
     if (!needName()) return;
-    socket.emit("create", withSeen({ ...profile(), game }), (r) => r.error && toast(t(r.error)));
+    socket.emit("create", withSeen({ ...profile(), game, lang, src: SRC }), (r) => r.error && toast(t(r.error)));
   };
   $$("[data-create]").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); create(b.dataset.create); }));
   $$("[data-card]").forEach((c) => (c.onclick = () => create(c.dataset.card)));

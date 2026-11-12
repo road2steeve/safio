@@ -14,6 +14,8 @@ const { blindtest } = require("./games/blindtest");
 const { filterText } = require("./lib/moderation");
 const { pick, pickTheme } = require("./lib/pick");
 const leaderboard = require("./lib/leaderboard");
+const stats = require("./lib/stats");
+const statsPage = require("./lib/statspage");
 const { createTv } = require("./lib/tv");
 const { THEMES } = require("./data/questions");
 
@@ -61,6 +63,12 @@ app.get("/qr", async (req, res) => {
   res.type("svg").send(await QRCode.toString(text, { type: "svg", margin: 1 }));
 });
 app.get("/health", (_, res) => res.send("ok"));
+// Statistiques anonymes : /stats?key=<STATS_KEY> (page désactivée tant que STATS_KEY n'est pas défini)
+app.get("/stats", async (req, res) => {
+  const key = process.env.STATS_KEY;
+  if (!key || req.query.key !== key) return res.status(404).end();
+  res.set("Cache-Control", "no-store").type("html").send(statsPage.render("SAFIO Quiz", await stats.read(30)));
+});
 // SAFIO TV : la page de l'écran collectif
 app.get("/tv", (_, res) => res.sendFile(path.join(__dirname, "public", "tv.html")));
 
@@ -209,6 +217,7 @@ const ctx = {
     clearTimer(room);
     room.phase = "final";
     room.g = null;
+    stats.hit("finish", { game: room.game, mode: modeOf(room), n: connected(room).length });
     try { giveXp(room); } catch (e) { console.error(e); }
     if (room.solo) submitSolo(room);
     broadcast(room);
@@ -232,8 +241,10 @@ const ctx = {
   },
 };
 
+const modeOf = (room) => (room.solo ? "solo" : room.quick ? "quick" : "room");
 function startGame(room) {
   for (const p of room.players.values()) { p.score = 0; p.ready = false; }
+  stats.hit("start", { game: room.game, mode: modeOf(room), n: connected(room).length });
   room.result = null;
   room.recap = null;
   GAMES[room.game].start(room, ctx);
@@ -336,11 +347,13 @@ io.on("connection", (socket) => {
   const myFails = new Map();
   tv.bind(socket, { R, isHost, broadcast });
 
-  socket.on("create", ({ pid, name, avatar, ac, game, xp, seen }, cb) => {
+  socket.on("create", ({ pid, name, avatar, ac, game, xp, seen, lang, src }, cb) => {
     if (!mine(pid)) return cb && cb({ error: "err_auth" });
     if (!GAMES[game] || !pid) return cb && cb({ error: "err_game" });
     const r = newRoom(game, pid);
+    r.statLang = lang;
     attach(socket, r, addPlayer(r, { pid, name, avatar, ac, xp, seen }));
+    stats.hit("room", { game, mode: "room", lang, src });
     cb && cb({ code: r.code });
   });
 
@@ -361,6 +374,7 @@ io.on("connection", (socket) => {
     }
     // Salle ouverte par une télé : le premier qui arrive devient l'organisateur
     if (!r.hostPid || !r.players.has(r.hostPid)) r.hostPid = pid;
+    if (!r.players.has(pid)) stats.hit("join", { game: r.game, mode: "room" });
     attach(socket, r, addPlayer(r, { pid, name, avatar, ac, xp, seen }));
     cb && cb({ code: r.code });
   });

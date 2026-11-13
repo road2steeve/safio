@@ -3,6 +3,15 @@
 // bt / btCats (Blind Test), tv / btv (SAFIO TV), install. Un texte absent = texte français.
 (window.SAFIO_L10N = window.SAFIO_L10N || {}).nl = {
   ui: {
+    // Mode confort (bouton Aa + temps ×2)
+    comfort_view: "Comfortweergave: grotere tekst en knoppen",
+    comfort_on: "Comfortweergave aan: grotere tekst en knoppen",
+    comfort_off: "Normale weergave",
+    comfort_time: "Antwoordtijd",
+    comfort_normal: "Normaal",
+    comfort_slow: "Comfort (tijd ×2)",
+    comfort_timeHint: "Comfort verdubbelt elke timer: ideaal voor beginners, senioren of wie traag leest. Iedereen kan ook de tekst vergroten met de knop Aa bovenaan.",
+    comfort_onNote: "Comforttijd: elke timer duurt twee keer zo lang. Tik bovenaan op Aa om de tekst te vergroten.",
     tagline: "Partyspellen waarbij <b>je telefoon de controller wordt</b>. In dezelfde woonkamer of elk aan de andere kant van de wereld.",
     free: "🆓 Gratis", noAccount: "🙅 Geen account", remote: "🌍 Op afstand speelbaar",
     step1: "Eén iemand opent een kamer (pc, tv of telefoon).",

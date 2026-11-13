@@ -79,7 +79,7 @@ module.exports = {
       // STOP : tous les chronos passent à 10 secondes (sauf s'il restait moins)
       const left = Math.max(1, Math.ceil((g.deadline - Date.now()) / 1000));
       const idx = g.index;
-      ctx.setDeadline(room, Math.min(STOP_DELAY, left), () => {
+      ctx.setDeadline(room, Math.min(STOP_DELAY * (room.comfort ? 2 : 1), left), () => {
         ctx.emit(room, "collect");
         setTimeout(() => { if (room.g === g && g.index === idx) this.endRound(room, ctx); }, 700);
       });

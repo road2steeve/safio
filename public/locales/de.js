@@ -3,6 +3,15 @@
 // bt / btCats (Blind Test), tv / btv (SAFIO TV), install. Un texte absent = texte français.
 (window.SAFIO_L10N = window.SAFIO_L10N || {}).de = {
   ui: {
+    // Mode confort (bouton Aa + temps ×2)
+    comfort_view: "Komfortansicht: größere Schrift und Tasten",
+    comfort_on: "Komfortansicht an: größere Schrift und Tasten",
+    comfort_off: "Normale Ansicht",
+    comfort_time: "Antwortzeit",
+    comfort_normal: "Normal",
+    comfort_slow: "Komfort (Zeit ×2)",
+    comfort_timeHint: "Komfort verdoppelt jeden Timer: ideal für Einsteiger, Senioren oder alle, die langsam lesen. Jeder kann außerdem die Schrift mit der Taste Aa oben vergrößern.",
+    comfort_onNote: "Komfortzeit: Jeder Timer dauert doppelt so lang. Tippe oben auf Aa, um die Schrift zu vergrößern.",
     tagline: "Partyspiele, bei denen <b>dein Handy zum Controller wird</b>. Im selben Wohnzimmer oder jeder am anderen Ende der Welt.",
     free: "🆓 Kostenlos", noAccount: "🙅 Ohne Konto", remote: "🌍 Auch aus der Ferne spielbar",
     step1: "Eine Person öffnet einen Raum (PC, TV oder Handy).",

@@ -225,7 +225,7 @@ function render() {
   }
   if (g.phase === "lobby") dyn = isHost() ? "h" : "p";
   if (g.phase === "review" || g.phase === "final") dyn = JSON.stringify([g.judged, g.valid, g.groups, g.result, g.players.map((p) => p.pid), mergeSel, g.page, g.entries, g.coval, g.marks, g.comments, g.recap]);
-  const key = [lang, g.code, g.phase, g.game, g.round, g.hostPid, JSON.stringify(g.settings), dyn].join("|");
+  const key = [lang, g.code, g.phase, g.game, g.round, g.hostPid, JSON.stringify(g.settings), g.comfort ? "c" : "", dyn].join("|");
   if (key !== screenKey) {
     const sameRound = screenKey.includes(`|${g.code}|play|${g.game}|${g.round}|`);
     if (g.phase === "play" && !sameRound) { myAnswer = null; bacDraft = []; }
@@ -266,11 +266,22 @@ function navHTML(inRoom) {
   const pill = inRoom && S ? `<span class="room-pill"><span class="gi">${g.ico}</span><span class="hide-sm">${gameName(S.game)}</span>${S.solo ? "" : S.auto ? "" : `<span class="room-code">${S.code}</span>`}</span>` : "";
   return `<header class="nav">${brandHTML()}${links}
     <div class="nav-right">${pill}
+      <button class="icon-btn comfort-btn ${comfortOn() ? "on" : ""}" id="comfortBtn" aria-pressed="${comfortOn()}" aria-label="${t("comfort_view")}" title="${t("comfort_view")}">Aa</button>
       <button class="icon-btn" id="sndBtn" aria-label="${t("soundTitle")}">${soundIcon()}</button>
       ${langSelect()}
       ${inRoom ? "" : `<button class="btn violet small create-top" id="createTop">${t("createGame")}</button>`}
     </div></header>`;
 }
+// Affichage confort (réglage de ce téléphone) : texte et boutons plus grands, contraste renforcé
+const comfortOn = () => !!store.get("comfort", false);
+const applyComfort = () => document.documentElement.classList.toggle("comfort", comfortOn());
+function toggleComfort() {
+  store.set("comfort", !comfortOn());
+  applyComfort();
+  screenKey = ""; render();
+  toast(t(comfortOn() ? "comfort_on" : "comfort_off"));
+}
+applyComfort();
 const soundIcon = () => { const p = Sound.prefs; return p.muted || (!p.music && !p.sfx) ? "🔇" : "🔊"; };
 function bindNav() {
   const on = (sel, fn) => { const el = $(sel); if (el) el.onclick = fn; };
@@ -278,6 +289,7 @@ function bindNav() {
   if (lb) lb.onclick = (e) => { e.stopPropagation(); const dd = $("#langDD"); const o = dd.classList.toggle("open"); lb.setAttribute("aria-expanded", String(o)); };
   for (const b of $$("[data-setlang]")) b.onclick = () => setLang(b.dataset.setlang);
   on("#sndBtn", openSound);
+  on("#comfortBtn", toggleComfort);
   on("#brand", () => { if (!S) { local = "home"; screenKey = ""; render(); window.scrollTo({ top: 0, behavior: "smooth" }); } });
   on("#navRank", (e) => { e.preventDefault(); openRanking("_global"); });
   on("#createTop", () => { if (local !== "home") { local = "home"; screenKey = ""; render(); } const g = $("#games"); if (g) g.scrollIntoView({ behavior: "smooth" }); });
@@ -602,6 +614,7 @@ function lobbyHTML() {
     ${host ? "" : `<div class="actions"><button class="btn ghost small" id="editMe">✎ ${t("editProfile")}</button></div>`}</div>`;
   if (!host) {
     return `<div class="lobby">${invite}${crowd}
+      ${S.comfort ? `<p class="comfort-note">🐢 ${t("comfort_onNote")}</p>` : ""}
       ${howToHTML(G)}
       <div class="startbar"><div class="status" id="startStatus"></div><button class="btn green" id="readyBtn"></button></div></div>`;
   }
@@ -630,6 +643,9 @@ function lobbyHTML() {
   if (G === "bac") settings += `
     <div><p class="label">${s.mix ? t("myCats") : t("categories")} (${s.mix ? s.categories.filter((c) => !BAC_CATS[c]).length : s.categories.length})</p><div class="chips">${(s.mix ? s.categories.filter((c) => !BAC_CATS[c]) : [...new Set([...Object.keys(BAC_CATS), ...s.categories])]).map((c) => `<button class="chip ${s.categories.includes(c) ? "on" : ""}" data-cat="${esc(c)}">${esc(catName(c))}</button>`).join("")}</div>
       <div class="row" style="margin-top:10px"><input class="input" id="newCat" maxlength="30" placeholder="${t("addCat")}"><button class="btn" id="addCat">+</button></div></div>`;
+  settings += `<div class="comfort-set"><p class="label">${t("comfort_time")}</p><div class="chips">
+    <button class="chip ${S.comfort ? "" : "on"}" data-comfort="0">⏱ ${t("comfort_normal")}</button><button class="chip ${S.comfort ? "on" : ""}" data-comfort="1">🐢 ${t("comfort_slow")}</button></div>
+    <p class="muted small" style="margin-top:6px">${t("comfort_timeHint")}</p></div>`;
   return `<div class="lobby">
     <p class="host-banner">👑 ${t("hostPanel")}</p>
     ${invite}${crowd}
@@ -1007,6 +1023,7 @@ function bindRoom() {
   $$("[data-target]").forEach((b) => (b.onclick = () => act({ type: "target", pid: b.dataset.target })));
   $$("[data-shot]").forEach((b) => (b.onclick = () => { b.disabled = true; act({ type: "shot", cell: +b.dataset.shot }); }));
 
+  $$("[data-comfort]").forEach((b) => (b.onclick = () => socket.emit("settings", { comfort: b.dataset.comfort === "1" })));
   $$("[data-mix]").forEach((b) => (b.onclick = () => socket.emit("settings", { settings: { mix: b.dataset.mix === "1" } })));
   // Quiz libre : validation
   $$("[data-qmark]").forEach((b) => (b.onclick = () => act({ type: "mark", pid: b.dataset.pid, mark: b.dataset.qmark })));

@@ -84,6 +84,7 @@ function newCode() {
 }
 const SOLO = { count: 10, time: 20 }; // réglages fixes du solo, pour un classement équitable
 const QUICK = { count: 7, time: 10, theme: "all" };
+const COMFORT_FACTOR = 2; // « Temps confort » : chronos doublés (débutants, seniors, joueurs qui lisent lentement)
 
 const cleanSettings = (game, s = {}) => GAMES[game].clean(s, GAMES[game].defaults);
 const connected = (room) => [...room.players.values()].filter((p) => p.connected);
@@ -156,7 +157,7 @@ function giveXp(room) {
 function viewOf(room, pid) {
   const v = {
     code: room.code, hostPid: room.hostPid, game: room.game, phase: room.phase, solo: !!room.solo, auto: !!room.auto,
-    settings: room.settings, now: Date.now(), result: room.result, coval: room.coval || [],
+    settings: room.settings, comfort: !!room.comfort, now: Date.now(), result: room.result, coval: room.coval || [],
     recap: room.phase === "final" ? room.recap || null : null,
     players: [...room.players.values()].map((p) => ({ pid: p.pid, name: p.name, avatar: p.avatar, ac: p.ac || 0, lvl: levelOf(p.xp || 0), ready: !!p.ready, score: p.score, connected: p.connected, ...(p.bot ? { bot: true } : {}) })),
     robix: robix.GAMES,
@@ -229,7 +230,8 @@ const ctx = {
   everyone: (room, test) => connected(room).every(test),
   play(room, seconds, onEnd) {
     room.phase = "play";
-    setDeadline(room, seconds, onEnd);
+    // Temps confort (réglage de l'organisateur) : chaque chrono dure deux fois plus longtemps
+    setDeadline(room, seconds * (room.comfort && !room.solo && !room.auto ? COMFORT_FACTOR : 1), onEnd);
     broadcast(room);
   },
   review(room) {
@@ -441,9 +443,10 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("settings", ({ game, settings }) => {
+  socket.on("settings", ({ game, settings, comfort } = {}) => {
     const room = R();
     if (!isHost() || room.auto || (room.phase !== "lobby" && room.phase !== "final")) return;
+    if (typeof comfort === "boolean") room.comfort = comfort; // gardé quand on change de jeu
     if (game && GAMES[game] && game !== room.game) {
       room.game = game;
       room.settings = cleanSettings(game);

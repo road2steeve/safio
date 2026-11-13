@@ -601,3 +601,17 @@ span.mark { cursor: default; }
 .robix-box p { margin: 0; }
 .gp .robix-tag { position: absolute; top: 6px; right: 6px; z-index: 1; background: rgba(0, 0, 0, .55); border-radius: 999px; padding: 1px 7px; font-size: 13px; }
 .trust.robix-pitch { color: var(--turq); font-weight: 800; }
+
+/* ---------- Affichage confort (bouton « Aa ») : texte et boutons plus grands, contraste renforcé ---------- */
+.comfort-btn { font-family: var(--font-d); font-weight: 700; font-size: 17px; }
+.comfort-btn.on { background: var(--yellow); color: #17112e; }
+html.comfort { --muted: #c9d0f0; --line: rgba(200, 210, 255, .3); --line2: rgba(200, 210, 255, .45); }
+html.comfort #app, html.comfort .modal { zoom: 1.18; }
+html.comfort #toast { font-size: 19px; }
+html.comfort .nav { zoom: .85; } /* en-tête à taille normale : il doit tenir sur un téléphone étroit */
+html.comfort .modal { width: min(420px, calc(100% / 1.18)); }
+html.comfort .btn, html.comfort .chip, html.comfort .opt, html.comfort .answer { min-height: 52px; }
+html.comfort .small { font-size: 15px; }
+html.comfort .label { font-size: 13px; color: var(--text); }
+html.comfort * { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+.comfort-note { margin: 0; padding: 12px 16px; border-radius: 14px; background: rgba(255, 211, 77, .12); border: 1px solid rgba(255, 211, 77, .35); font-weight: 800; }

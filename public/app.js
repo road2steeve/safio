@@ -225,7 +225,7 @@ function render() {
   }
   if (g.phase === "lobby") dyn = isHost() ? "h" : "p";
   if (g.phase === "review" || g.phase === "final") dyn = JSON.stringify([g.judged, g.valid, g.groups, g.result, g.players.map((p) => p.pid), mergeSel, g.page, g.entries, g.coval, g.marks, g.comments, g.recap]);
-  const key = [lang, g.code, g.phase, g.game, g.round, g.hostPid, JSON.stringify(g.settings), dyn].join("|");
+  const key = [lang, g.code, g.phase, g.game, g.round, g.hostPid, JSON.stringify(g.settings), g.comfort ? "c" : "", dyn].join("|");
   if (key !== screenKey) {
     const sameRound = screenKey.includes(`|${g.code}|play|${g.game}|${g.round}|`);
     if (g.phase === "play" && !sameRound) { myAnswer = null; bacDraft = []; }

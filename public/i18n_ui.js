@@ -1,11 +1,11 @@
 // ---------- Refonte : textes de l'interface ----------
 Object.assign(T.fr, {
   nav_games: "Jeux", nav_ranking: "Classement", nav_how: "Comment ça marche", createGame: "Créer une partie",
-  heroKicker: "Party games sur téléphone", heroTitle: "La soirée commence ici.", heroSub: "Des jeux, des amis et des fous rires. Il ne manque que toi.",
+  heroKicker: "Culture, réflexion, compétition", heroTitle: "Prouve que tu es le plus calé.", heroSub: "Questions, mots, estimations et blind test : réfléchis vite, marque des points et défie le monde entier en solo.",
   ctaCreate: "Créer une partie", ctaJoin: "Rejoindre", yourProfile: "Ton profil", pickAvatar: "Choisis ton avatar", avColor: "Couleur", codeLbl: "Code de la partie", qrInvite: "Tu es invité·e dans la partie {c} ! Entre ton prénom puis touche Rejoindre.",
   noSignup: "Gratuit · Sans inscription · Jusqu'à 30 joueurs", universeLink: "✦ Découvrir l'univers SAFIO",
   cat_all: "Tous", cat_popular: "Populaires", cat_new: "Nouveautés", cat_quick: "Jeux rapides", cat_friends: "Entre amis",
-  playersN: "{n} joueurs", minutes: "≈ {n} min", playBtn: "Jouer", gamesTitle: "Choisis ton jeu", gamesSub: "9 jeux originaux, en français, anglais, espagnol, néerlandais et allemand.",
+  playersN: "{n} joueurs", diff_1: "Facile", diff_2: "Moyen", diff_3: "Corsé", diffLbl: "Difficulté", minutes: "≈ {n} min", playBtn: "Jouer", gamesTitle: "Choisis ton jeu", gamesSub: "9 jeux originaux, en français, anglais, espagnol, néerlandais et allemand.",
   nowTitle: "Pas d'amis sous la main ?", how1: "Crée une partie sur un écran", how2: "Tes amis scannent le QR code", how3: "Chacun joue sur son téléphone", howTitle: "Prêt en 10 secondes",
   soundTitle: "Son", musicLbl: "Musique", sfxLbl: "Effets sonores", volume: "Volume", muteAll: "Tout couper", unmuteAll: "Réactiver le son", close: "Fermer", soundHint: "Le son démarre après ton premier clic.",
   inviteFriends: "Invite tes amis", copyLink: "Copier le lien", roomCodeLbl: "Code", playersInRoom: "Joueurs", readyBtn: "Je suis prêt !", notReadyBtn: "Finalement pas prêt",
@@ -17,11 +17,11 @@ Object.assign(T.fr, {
 });
 Object.assign(T.en, {
   nav_games: "Games", nav_ranking: "Leaderboard", nav_how: "How it works", createGame: "Create a game",
-  heroKicker: "Party games on your phone", heroTitle: "The party starts here.", heroSub: "Games, friends and big laughs. All that's missing is you.",
+  heroKicker: "Trivia, brainpower, competition", heroTitle: "Prove you're the smartest.", heroSub: "Questions, words, estimates and blind test: think fast, score points and take on the whole world in solo mode.",
   ctaCreate: "Create a game", ctaJoin: "Join", yourProfile: "Your profile", pickAvatar: "Pick your avatar", avColor: "Colour", codeLbl: "Game code", qrInvite: "You're invited to game {c}! Enter your name, then tap Join.",
   noSignup: "Free · No sign-up · Up to 30 players", universeLink: "✦ Discover the SAFIO universe",
   cat_all: "All", cat_popular: "Popular", cat_new: "New", cat_quick: "Quick games", cat_friends: "With friends",
-  playersN: "{n} players", minutes: "≈ {n} min", playBtn: "Play", gamesTitle: "Pick your game", gamesSub: "9 original games, in English, French, Spanish, Dutch and German.",
+  playersN: "{n} players", diff_1: "Easy", diff_2: "Medium", diff_3: "Tough", diffLbl: "Difficulty", minutes: "≈ {n} min", playBtn: "Play", gamesTitle: "Pick your game", gamesSub: "9 original games, in English, French, Spanish, Dutch and German.",
   nowTitle: "No friends around?", how1: "Create a game on any screen", how2: "Friends scan the QR code", how3: "Everyone plays on their phone", howTitle: "Ready in 10 seconds",
   soundTitle: "Sound", musicLbl: "Music", sfxLbl: "Sound effects", volume: "Volume", muteAll: "Mute all", unmuteAll: "Turn sound back on", close: "Close", soundHint: "Sound starts after your first tap.",
   inviteFriends: "Invite your friends", copyLink: "Copy link", roomCodeLbl: "Code", playersInRoom: "Players", readyBtn: "I'm ready!", notReadyBtn: "Not ready after all",
@@ -33,11 +33,11 @@ Object.assign(T.en, {
 });
 Object.assign(T.es, {
   nav_games: "Juegos", nav_ranking: "Clasificación", nav_how: "Cómo funciona", createGame: "Crear partida",
-  heroKicker: "Juegos de fiesta en el móvil", heroTitle: "La fiesta empieza aquí.", heroSub: "Juegos, amigos y muchas risas. Solo faltas tú.",
+  heroKicker: "Cultura, ingenio, competición", heroTitle: "Demuestra que eres el más listo.", heroSub: "Preguntas, palabras, estimaciones y blind test: piensa rápido, suma puntos y desafía al mundo entero en solitario.",
   ctaCreate: "Crear partida", ctaJoin: "Unirse", yourProfile: "Tu perfil", pickAvatar: "Elige tu avatar", avColor: "Color", codeLbl: "Código de la partida", qrInvite: "¡Te han invitado a la partida {c}! Escribe tu nombre y toca Unirse.",
   noSignup: "Gratis · Sin registro · Hasta 30 jugadores", universeLink: "✦ Descubre el universo SAFIO",
   cat_all: "Todos", cat_popular: "Populares", cat_new: "Novedades", cat_quick: "Juegos rápidos", cat_friends: "Entre amigos",
-  playersN: "{n} jugadores", minutes: "≈ {n} min", playBtn: "Jugar", gamesTitle: "Elige tu juego", gamesSub: "9 juegos originales, en español, francés, inglés, neerlandés y alemán.",
+  playersN: "{n} jugadores", diff_1: "Fácil", diff_2: "Medio", diff_3: "Difícil", diffLbl: "Dificultad", minutes: "≈ {n} min", playBtn: "Jugar", gamesTitle: "Elige tu juego", gamesSub: "9 juegos originales, en español, francés, inglés, neerlandés y alemán.",
   nowTitle: "¿Sin amigos a mano?", how1: "Crea una partida en una pantalla", how2: "Tus amigos escanean el QR", how3: "Cada uno juega en su móvil", howTitle: "Listo en 10 segundos",
   soundTitle: "Sonido", musicLbl: "Música", sfxLbl: "Efectos de sonido", volume: "Volumen", muteAll: "Silenciar todo", unmuteAll: "Reactivar el sonido", close: "Cerrar", soundHint: "El sonido empieza tras tu primer toque.",
   inviteFriends: "Invita a tus amigos", copyLink: "Copiar enlace", roomCodeLbl: "Código", playersInRoom: "Jugadores", readyBtn: "¡Estoy listo!", notReadyBtn: "Al final no estoy listo",

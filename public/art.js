@@ -2,16 +2,17 @@
 const AV_COLORS = ["#7c5cff", "#22d3c5", "#3b82f6", "#ff6b6b", "#f59e0b", "#ec4899", "#10b981", "#8b5cf6", "#06b6d4", "#f97316"];
 
 // players : nombre de joueurs conseillé ; mins : durée moyenne ; tags : catégories de l'accueil
+// diff : difficulté affichée sur la carte (1 facile, 2 moyen, 3 corsé)
 const GAME_META = {
-  quiz: { players: "1–16", mins: "10", tags: ["popular", "friends"], c1: "#3b82f6", c2: "#22d3c5" },
-  mytho: { players: "2–12", mins: "15", tags: ["popular", "friends"], c1: "#8b5cf6", c2: "#ec4899" },
-  bac: { players: "1–16", mins: "15", tags: ["popular", "friends"], c1: "#14b8a6", c2: "#3b82f6" },
-  duel: { players: "2–30", mins: "3", tags: ["popular", "quick"], c1: "#f59e0b", c2: "#ef4444" },
-  brain: { players: "2–30", mins: "10", tags: ["new", "friends"], c1: "#ec4899", c2: "#f97316" },
-  youre: { players: "3–30", mins: "10", tags: ["friends", "quick"], c1: "#f97316", c2: "#f43f5e" },
-  closest: { players: "1–30", mins: "8", tags: ["new", "quick"], c1: "#eab308", c2: "#22c55e" },
-  torpille: { players: "2–8", mins: "15", tags: ["new"], c1: "#0ea5e9", c2: "#6366f1" },
-  blindtest: { players: "2–30", mins: "15", tags: ["new", "popular", "friends"], c1: "#d946ef", c2: "#7c3aed" },
+  quiz: { players: "1–16", mins: "10", diff: 2, tags: ["popular", "friends"], c1: "#3b82f6", c2: "#22d3c5" },
+  mytho: { players: "2–12", mins: "15", diff: 2, tags: ["popular", "friends"], c1: "#8b5cf6", c2: "#ec4899" },
+  bac: { players: "1–16", mins: "15", diff: 1, tags: ["popular", "friends"], c1: "#14b8a6", c2: "#3b82f6" },
+  duel: { players: "2–30", mins: "3", diff: 2, tags: ["popular", "quick"], c1: "#f59e0b", c2: "#ef4444" },
+  brain: { players: "2–30", mins: "10", diff: 1, tags: ["new", "friends"], c1: "#ec4899", c2: "#f97316" },
+  youre: { players: "3–30", mins: "10", diff: 1, tags: ["friends", "quick"], c1: "#f97316", c2: "#f43f5e" },
+  closest: { players: "1–30", mins: "8", diff: 2, tags: ["new", "quick"], c1: "#eab308", c2: "#22c55e" },
+  torpille: { players: "2–8", mins: "15", diff: 3, tags: ["new"], c1: "#0ea5e9", c2: "#6366f1" },
+  blindtest: { players: "2–30", mins: "15", diff: 2, tags: ["new", "popular", "friends"], c1: "#d946ef", c2: "#7c3aed" },
 };
 
 const ART = (() => {

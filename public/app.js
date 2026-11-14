@@ -405,7 +405,7 @@ function gameCard(id, i) {
   return `<article class="gcard" data-card="${id}" style="animation-delay:${i * 0.05}s">
     ${m.tags.includes("new") ? `<span class="tagnew">${t("cat_new")}</span>` : ""}${ART[id]}
     <div class="gbody"><h3>${gameName(id)}</h3><p>${t("g_" + id + "_d")}</p>
-      <div class="gmeta"><span>👥 ${t("playersN", { n: m.players })}</span><span>⏱ ${t("minutes", { n: m.mins })}</span></div>
+      <div class="gmeta"><span>👥 ${t("playersN", { n: m.players })}</span><span>⏱ ${t("minutes", { n: m.mins })}</span>${m.diff ? `<span class="gdiff d${m.diff}" title="${t("diffLbl")}"><i aria-hidden="true">${"●".repeat(m.diff)}${"○".repeat(3 - m.diff)}</i> ${t("diff_" + m.diff)}</span>` : ""}</div>
       <button class="btn violet" data-create="${id}">${t("playBtn")} ▸</button></div></article>`;
 }
 

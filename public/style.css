@@ -190,6 +190,8 @@ input[type=range] { width: 100%; accent-color: var(--turq); height: 28px; cursor
 .gcard p { color: var(--muted); font-size: 15px; }
 .gmeta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
 .gmeta span { font-size: 13px; font-weight: 800; color: #c3cbef; background: var(--surface2); border-radius: 999px; padding: 4px 10px; }
+.gmeta .gdiff i { font-style: normal; letter-spacing: 1px; font-size: 9px; vertical-align: 1px; }
+.gmeta .gdiff.d1 { color: #6ee7b7; } .gmeta .gdiff.d2 { color: #fcd34d; } .gmeta .gdiff.d3 { color: #fda4af; }
 .gcard .btn { margin-top: 6px; width: 100%; }
 .gcard .tagnew { position: absolute; top: 12px; left: 12px; background: var(--coral); color: #fff; font-size: 11px; font-weight: 900; letter-spacing: 1px; padding: 4px 9px; border-radius: 999px; text-transform: uppercase; }
 @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }

@@ -71,7 +71,7 @@ button { -webkit-user-select: none; user-select: none; }
 .btn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 var(--bd); }
 .btn:disabled { opacity: .45; cursor: default; }
 .btn.primary { --b: var(--yellow); --bd: var(--yellow-d); --fg: #1a1400; }
-.btn.violet { --b: var(--violet); --bd: var(--violet-d); --fg: #fff; }
+.btn.violet { --b: #7552ff; /* violet un peu plus foncé : texte blanc lisible (contraste 4,8:1) */ --bd: var(--violet-d); --fg: #fff; }
 .btn.teal { --b: var(--turq); --bd: var(--turq-d); --fg: #04231f; }
 .btn.coral, .btn.pink { --b: var(--coral); --bd: var(--coral-d); --fg: #fff; }
 .btn.green { --b: var(--green); --bd: var(--green-d); --fg: #032318; }
@@ -193,7 +193,7 @@ input[type=range] { width: 100%; accent-color: var(--turq); height: 28px; cursor
 .gmeta .gdiff i { font-style: normal; letter-spacing: 1px; font-size: 9px; vertical-align: 1px; }
 .gmeta .gdiff.d1 { color: #6ee7b7; } .gmeta .gdiff.d2 { color: #fcd34d; } .gmeta .gdiff.d3 { color: #fda4af; }
 .gcard .btn { margin-top: 6px; width: 100%; }
-.gcard .tagnew { position: absolute; top: 12px; left: 12px; background: var(--coral); color: #fff; font-size: 11px; font-weight: 900; letter-spacing: 1px; padding: 4px 9px; border-radius: 999px; text-transform: uppercase; }
+.gcard .tagnew { position: absolute; top: 12px; left: 12px; background: var(--coral); color: #2b0508; /* texte foncé : lisible sur le corail */ font-size: 11px; font-weight: 900; letter-spacing: 1px; padding: 4px 9px; border-radius: 999px; text-transform: uppercase; }
 @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 
 .how { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
@@ -445,6 +445,14 @@ span.mark { cursor: default; }
 .recap-row .ra b { color: var(--green); }
 .recap-row .mark { min-width: 26px; height: 24px; font-size: 13px; border-radius: 7px; padding: 0 5px; }
 @media (max-width: 520px) { .ans .who { width: 96px; } .mark { min-width: 34px; padding: 0 5px; } .mark .mlbl { display: none; } }
+/* Correction par l'hôte sur téléphone : la réponse garde toute la ligne, les 3 boutons passent dessous en grand (44 px) */
+@media (max-width: 520px) {
+  .qv .ans { flex-wrap: wrap; row-gap: 8px; }
+  .qv .ans .what { flex: 1 1 0; min-width: 0; overflow-wrap: break-word; }
+  .qv .ans .marks { flex: 1 0 100%; gap: 6px; }
+  .qv .ans .marks .mark { flex: 1; height: 44px; }
+  .qv .ans .marks .mark .mlbl { display: inline; }
+}
 
 /* ---------- Fin de partie ---------- */
 .final-title { font-size: clamp(34px, 6vw, 52px); font-weight: 700; margin-top: 6px; }
@@ -504,7 +512,7 @@ span.mark { cursor: default; }
   .gcard p { font-size: 13px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .gmeta span { font-size: 11px; padding: 3px 7px; }
   .gcard .btn { padding: 10px; font-size: 15px; }
-  .gcard .tagnew { font-size: 9px; top: 8px; left: 8px; }
+  .gcard .tagnew { font-size: 10px; top: 8px; left: 8px; }
   .card { padding: 16px; border-radius: 22px; }
   .layout > section.card { padding: 16px 14px; }
 }
@@ -514,6 +522,8 @@ span.mark { cursor: default; }
 @media (max-width: 520px) { .brand h1 { gap: 6px; } .brand h1 .line { font-size: .5em; padding: 3px 6px 2px; letter-spacing: 1px; } }
 .brand h1 .nm { font-weight: inherit; }
 @media (max-width: 430px) { .nav:has(.room-pill) .brand h1 .line { display: none; } .room-pill:has(.room-code) .gi { display: none; } }
+/* Très petit téléphone en partie : seul le logo reste, l'en-tête ne déborde plus */
+@media (max-width: 380px) { .nav:has(.room-pill) .brand h1 { display: none; } }
 
 /* ---------- Niveaux / XP ---------- */
 .lvl-card { margin-top: 14px; padding: 12px 14px; border-radius: 16px; background: rgba(124, 92, 255, .1); border: 1px solid rgba(124, 92, 255, .35); }

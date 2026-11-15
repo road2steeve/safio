@@ -11,11 +11,12 @@ const GAMES = {
   closest: { ico: "🎯", color: "#eab308" },
   torpille: { ico: "🚢", color: "#0ea5e9" },
   blindtest: { ico: "🎵", color: "#d946ef" },
+  turbo: { ico: "🏁", color: "#ef4444" },
 };
-const MIN_PLAYERS = { mytho: 2, brain: 2, youre: 3, torpille: 2, blindtest: 2 };
-const MAX_PLAYERS = { quiz: 16, mytho: 12, bac: 16, torpille: 8 }; // les autres jeux : 30 (taille du salon)
+const MIN_PLAYERS = { mytho: 2, brain: 2, youre: 3, torpille: 2, blindtest: 2, turbo: 2 };
+const MAX_PLAYERS = { quiz: 16, mytho: 12, bac: 16, torpille: 8, turbo: 12 }; // les autres jeux : 30 (taille du salon)
 // Ambiance musicale selon le type de jeu
-const GAME_MUSIC = { quiz: "play", bac: "calm", duel: "fast", closest: "fast", mytho: "calm", brain: "calm", youre: "calm", torpille: "play" };
+const GAME_MUSIC = { quiz: "play", bac: "calm", duel: "fast", closest: "fast", mytho: "calm", brain: "calm", youre: "calm", torpille: "play", turbo: "fast" };
 
 // ======== Langue & stockage ========
 const store = {
@@ -221,6 +222,7 @@ function render() {
     if (g.game === "mytho") dyn += "," + g.myVote;
     if (g.game === "duel") dyn += "," + g.myOk;
     if (g.game === "blindtest") dyn += JSON.stringify([g.bt, g.mine, !!g.cue]);
+    if (g.game === "turbo") dyn += "," + !!g.hand; // le reste se met à jour sans redessiner (tbLive), pour ne pas fermer le clavier
     if (g.game === "torpille" && g.step === "shoot") dyn += JSON.stringify([g.boards, g.target, g.shotsLeft]);
   }
   if (g.phase === "lobby") dyn = isHost() ? "h" : "p";
@@ -245,6 +247,7 @@ function render() {
     if (g.phase === "final" && newScene) confetti();
   }
   updateLive();
+  if (g.game === "turbo") tbLive();
 }
 
 function mainHTML() {
@@ -254,7 +257,7 @@ function mainHTML() {
   const fn = {
     quiz: [qaPlay, quizReview], duel: [qaPlay, quizReview], closest: [qaPlay, closestReview], bac: [bacPlay, bacReview],
     mytho: [mythoPlay, mythoReview], brain: [brainPlay, brainReview], youre: [yourePlay, youreReview], torpille: [torpPlay, torpReview],
-    blindtest: [btPlay, btReview],
+    blindtest: [btPlay, btReview], turbo: [tbPlay, tbReview],
   }[S.game];
   return S.phase === "play" ? fn[0]() : fn[1]();
 }
@@ -620,6 +623,7 @@ function lobbyHTML() {
   }
   let settings = "";
   if (G === "blindtest") settings = btLobby();
+  else if (G === "turbo") settings = tbLobby();
   else if ("themes" in s) {
     const sel = s.themes || [];
     const ids = Object.keys(THEME_INFO).filter((id) => id !== "random" && id !== "all");
@@ -629,10 +633,10 @@ function lobbyHTML() {
   if (G === "blindtest") settings += "";
   else if ("theme" in s) settings += `<div><h3 class="sub">${t("theme")}</h3><p class="muted small" style="margin:4px 0 12px">${t("themeHint")}</p>${themeGrid(s.theme, "data-tg")}</div>`;
   const sl = [];
-  if (G === "blindtest") sl.length = 0;
+  if (G === "blindtest" || G === "turbo") sl.length = 0;
   else if ("time" in s) sl.push(slider("time", G === "bac" ? t("timePerRound") : t("timePerQ"), G === "bac" ? 30 : G === "duel" ? 5 : 10, G === "bac" ? 300 : G === "duel" ? 60 : 120, 5, " s"));
   if ("count" in s && G !== "blindtest") sl.push(slider("count", t(G === "torpille" ? "rounds" : "questions"), 3, G === "closest" ? 20 : 30, 1));
-  if ("rounds" in s) sl.push(slider("rounds", t("rounds"), 1, 10, 1));
+  if ("rounds" in s && G !== "turbo") sl.push(slider("rounds", t("rounds"), 1, 10, 1));
   if (sl.length) settings += `<div class="sliders">${sl.join("")}</div>`;
   if (G === "bac") settings += `<p class="muted small">${t("covalHint")}</p>`;
   if (G === "quiz") settings += `<p class="muted small">${t("covalHintQuiz")}</p>`;
@@ -1039,6 +1043,7 @@ function bindRoom() {
   on("#nextPage", "onclick", () => act({ type: "page", dir: 1 }));
   on("#finishVal", "onclick", () => act({ type: "finish" }));
   if (S.game === "blindtest") btBind();
+  if (S.game === "turbo") tbBind();
 
   // Correction (hôte)
   $$("[data-judge]").forEach((b) => (b.onclick = () => act({ type: "judge", pid: b.dataset.judge, ok: b.dataset.ok === "1" })));

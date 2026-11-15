@@ -13,6 +13,7 @@ const GAME_META = {
   closest: { players: "1–30", mins: "8", diff: 2, tags: ["new", "quick"], c1: "#eab308", c2: "#22c55e" },
   torpille: { players: "2–8", mins: "15", diff: 3, tags: ["new"], c1: "#0ea5e9", c2: "#6366f1" },
   blindtest: { players: "2–30", mins: "15", diff: 2, tags: ["new", "popular", "friends"], c1: "#d946ef", c2: "#7c3aed" },
+  turbo: { players: "2–12", mins: "10", diff: 2, tags: ["new", "quick", "friends"], c1: "#ef4444", c2: "#f59e0b" },
 };
 
 const ART = (() => {
@@ -82,6 +83,10 @@ const ART = (() => {
       <g fill="#fff">${[0, 1, 2, 3, 4].map((i) => `<rect x="${150 + i * 14}" y="${118 - [30, 52, 40, 62, 26][i]}" width="9" height="${[30, 52, 40, 62, 26][i]}" rx="4.5" opacity="${0.6 + i * 0.08}"/>`).join("")}</g>
       <g transform="translate(166 34) rotate(12)" fill="#fff"><path d="M0 0v26a7 6 0 1 1-4-5V4l22-5v20a7 6 0 1 1-4-5V3z"/></g>
       <g transform="translate(30 30) rotate(-14)" fill="#ffd34d"><path d="M0 0v18a6 5 0 1 1-4-4V-2l3-1z"/></g>`),
+    turbo: wrap("turbo", `
+      <g opacity=".5" stroke="#fff" stroke-width="5" stroke-linecap="round"><path d="M18 52h40M10 78h52M22 104h36"/></g>
+      ${["B", "T", "M"].map((l, i) => `<g transform="translate(${92 + i * 44} ${62 + (i % 2) * 22}) rotate(${[-10, 6, -4][i]})"><rect x="-19" y="-21" width="38" height="42" rx="9" fill="#fff"/><rect x="-19" y="15" width="38" height="6" rx="3" fill="#000" opacity=".12"/><text y="11" font-size="28" font-weight="900" text-anchor="middle" fill="${["#ef4444", "#f59e0b", "#7c3aed"][i]}">${l}</text></g>`).join("")}
+      <g transform="translate(196 124)"><rect x="-26" y="-9" width="52" height="18" rx="4" fill="#111827"/>${[0, 1, 2, 3, 4, 5].map((k) => `<rect x="${-26 + k * 8.7}" y="${k % 2 ? -9 : 0}" width="8.7" height="9" fill="#fff"/>`).join("")}</g>`),
   };
 })();
 

@@ -617,3 +617,25 @@ html.comfort .small { font-size: 15px; }
 html.comfort .label { font-size: 13px; color: var(--text); }
 html.comfort * { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 .comfort-note { margin: 0; padding: 12px 16px; border-radius: 14px; background: rgba(255, 211, 77, .12); border: 1px solid rgba(255, 211, 77, .35); font-weight: 800; }
+
+/* ======== Turbo Bac ======== */
+.tb-theme { display: flex; flex-direction: column; align-items: center; gap: 6px; max-width: 560px; margin: 8px auto 14px; padding: 16px 18px; border-radius: 22px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, .22), rgba(245, 158, 11, .18)); border: 2px solid rgba(245, 158, 11, .45); }
+.tb-theme b { font-family: var(--font-d); font-size: clamp(20px, 5.4vw, 30px); line-height: 1.15; }
+.tb-theme .tb-ico { font-size: 34px; }
+.tb-theme .tb-count { letter-spacing: 4px; color: var(--yellow); font-size: 14px; }
+.tb-theme.pop { animation: tbPop .5s var(--ease); }
+@keyframes tbPop { 0% { transform: scale(.85); opacity: .3; } 60% { transform: scale(1.04); } 100% { transform: none; opacity: 1; } }
+.tb-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 4px 0 14px; }
+.tb-tile { width: 50px; height: 56px; display: grid; place-items: center; border-radius: 12px; background: #fff; color: #ef4444; font: 900 30px/1 var(--font-d);
+  box-shadow: 0 5px 0 rgba(0, 0, 0, .25); animation: rise .3s var(--ease) both; }
+.tb-form { max-width: 560px; margin: 0 auto 6px; }
+.tb-feed, .tb-left { max-width: 660px; margin: 14px auto 0; }
+.tb-feed .ans .what .tb-l { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 7px; background: #fff; color: #ef4444; font-weight: 900; margin-right: 4px; }
+.tb-st.ok { color: var(--green); font-weight: 900; } .tb-st.ko { color: var(--red); font-weight: 900; }
+.tb-race { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.tb-run { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 5px; border-radius: 999px; background: var(--bg2); border: 2px solid var(--line); font-size: 14px; }
+.tb-run b { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-run i { font-style: normal; font-weight: 900; color: var(--yellow); }
+.tb-run.fin { border-color: var(--green); } .tb-run.fin i { color: var(--green); }
+.comfort .tb-tile { width: 60px; height: 66px; font-size: 36px; }

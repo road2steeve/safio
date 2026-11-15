@@ -308,3 +308,14 @@ body.calm .bt-eq i, body.calm .vinyl { animation: none; }
 .gate-lang.on { border-color: var(--yellow); }
 .gate-lang:focus { outline: 3px solid var(--yellow); outline-offset: 3px; }
 .flag { display: block; flex: none; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .3); }
+
+/* Turbo Bac */
+.tb-tv-theme { display: flex; align-items: center; gap: 22px; padding: 22px 30px; margin-bottom: 22px; border-radius: 30px; background: linear-gradient(135deg, rgba(239, 68, 68, .25), rgba(245, 158, 11, .2)); border: 3px solid rgba(245, 158, 11, .5); }
+.tb-tv-theme .ico { font-size: 72px; }
+.tb-tv-theme b { flex: 1; font-size: 54px; line-height: 1.1; }
+.tb-tv-theme .cnt { font-size: 30px; letter-spacing: 6px; color: #ffd34d; }
+.tb-race { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 18px; }
+.tb-race .tb-run { display: inline-flex; align-items: center; gap: 8px; padding: 4px 16px 4px 4px; border-radius: 999px; background: rgba(255, 255, 255, .08); }
+.tb-race .tb-run i { font-style: normal; font-weight: 900; font-size: 32px; color: #ffd34d; }
+.tb-win { display: flex; flex-direction: column; align-items: center; gap: 18px; padding-top: 30px; }
+.tb-win b { font-size: 52px; text-align: center; }

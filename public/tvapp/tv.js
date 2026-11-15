@@ -409,7 +409,7 @@
     for (var i = 0; i < bs.length; i++) bs[i].onclick = function (e) { e.stopPropagation(); setTvLang(this.getAttribute("data-tvlang")); };
   }
   gate.innerHTML = gateHTML();
-  document.body.appendChild(gate);
+  (document.querySelector("main") || document.body).appendChild(gate);
   bindGateLangs();
   var gateBtn = $("#gate-btn");
   setTimeout(function () { try { gateBtn.focus(); } catch (e) {} }, 50);

@@ -106,7 +106,7 @@ input[type=range] { width: 100%; accent-color: var(--turq); height: 28px; cursor
 .card { background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0)) , var(--surface); border: 1px solid var(--line); border-radius: 26px; padding: 22px; box-shadow: var(--shadow); }
 .card.narrow { max-width: 760px; margin: 0 auto; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip { border: 2px solid var(--line2); background: var(--bg2); border-radius: 999px; padding: 8px 15px; cursor: pointer; font-size: 15px; font-weight: 700; transition: all .15s; }
+.chip { border: 2px solid var(--line2); background: var(--bg2); border-radius: 999px; padding: 8px 15px; cursor: pointer; font-size: 15px; font-weight: 700; transition: background-color .15s, border-color .15s, color .15s; }
 .chip:hover { border-color: var(--turq); }
 .chip.on { background: var(--turq); border-color: var(--turq); color: #04231f; }
 
@@ -174,7 +174,7 @@ input[type=range] { width: 100%; accent-color: var(--turq); height: 28px; cursor
 .section-head p { color: var(--muted); margin-top: 6px; }
 .tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
 .tabs::-webkit-scrollbar { display: none; }
-.tab { flex: none; border: 2px solid var(--line2); background: transparent; border-radius: 999px; padding: 9px 16px; font-weight: 800; cursor: pointer; color: var(--muted); transition: all .2s; }
+.tab { flex: none; border: 2px solid var(--line2); background: transparent; border-radius: 999px; padding: 9px 16px; font-weight: 800; cursor: pointer; color: var(--muted); transition: background-color .2s, border-color .2s, color .2s; }
 .tab:hover { color: var(--text); }
 .tab.on { background: var(--text); color: var(--bg); border-color: var(--text); }
 .game-cards { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
@@ -679,3 +679,8 @@ html.comfort * { animation-duration: .01ms !important; animation-iteration-count
 /* Titre du héros : un peu plus serré */
 .hero h2 { letter-spacing: -.025em; }
 @media (prefers-reduced-motion: reduce) { .gcard, .gcard .art { transition: none; } }
+
+/* Lot F : sur écran tactile, un survol « collé » après un tap ne doit pas laisser un élément soulevé */
+@media (hover: none) {
+  .avatar-grid button:hover, .mode-tile:hover, .theme:hover, .gp:hover, .gcard:hover .art { transform: none; }
+}

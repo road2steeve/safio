@@ -1,6 +1,12 @@
-// Turbo Bac : tous les thèmes. Chaque thème : { id, ico, fr, en, es, nl, de, w: { fr: [...], en: [...], es: [...] } }
+// Turbo Bac : tous les thèmes. Chaque thème : { id, ico, fr, en, es, nl, de, w: { fr: [...], en: [...], es: [...], nl?, de? } }
 // « w » = quelques exemples de réponses, utilisés par les Robix (ils jouent dans leur langue, sinon en anglais).
-const rows = [...require("./turbo/t1"), ...require("./turbo/t2"), ...require("./turbo/t3")];
+// Lignes : [id, icône, fr, en, es, nl, de, exemples fr, en, es (, nl, de)]
+const rows = ["t1", "t2", "t3", "t4", "t5"].flatMap((f) => require("./turbo/" + f));
 const split = (s) => String(s || "").split(",").map((x) => x.trim()).filter(Boolean);
-const THEMES = rows.map(([id, ico, fr, en, es, nl, de, wfr, wen, wes]) => ({ id, ico, fr, en, es, nl, de, w: { fr: split(wfr), en: split(wen), es: split(wes) } }));
+const THEMES = rows.map(([id, ico, fr, en, es, nl, de, wfr, wen, wes, wnl, wde]) => {
+  const w = { fr: split(wfr), en: split(wen), es: split(wes) };
+  if (wnl) w.nl = split(wnl);
+  if (wde) w.de = split(wde);
+  return { id, ico, fr, en, es, nl, de, w };
+});
 module.exports = { THEMES };

@@ -30,7 +30,7 @@ const until = async (fn, ms = 15000) => { const end = Date.now() + ms; while (Da
 const act = (s, d) => new Promise((ok) => { s.emit("act", d, ok); setTimeout(() => ok(null), 800); });
 
 test("contenu : thèmes complets en 5 langues, identifiants uniques", () => {
-  assert.ok(THEMES.length >= 215);
+  assert.ok(THEMES.length >= 290);
   assert.strictEqual(new Set(THEMES.map((t) => t.id)).size, THEMES.length);
   for (const t of THEMES) {
     for (const l of ["fr", "en", "es", "nl", "de"]) assert.ok(t[l] && t[l].length > 3, `${t.id} ${l}`);

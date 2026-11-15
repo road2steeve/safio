@@ -649,3 +649,33 @@ html.comfort * { animation-duration: .01ms !important; animation-iteration-count
 .tb-run i { font-style: normal; font-weight: 900; color: var(--yellow); }
 .tb-run.fin { border-color: var(--green); } .tb-run.fin i { color: var(--green); }
 .comfort .tb-tile { width: 60px; height: 66px; font-size: 36px; }
+
+/* =====================================================================
+   Refonte visuelle (novembre 2026) : chaque jeu porte sa couleur.
+   Avant : 10 boutons violets identiques. Maintenant : la carte, sa bordure
+   et son bouton prennent les couleurs de l'illustration du jeu.
+   ===================================================================== */
+:root { --ease-out: cubic-bezier(.23, 1, .32, 1); }
+.gcard { --c1: var(--violet); --c2: var(--blue);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c1) 16%, var(--surface)) 0%, var(--surface) 55%);
+  border-color: color-mix(in srgb, var(--c1) 34%, transparent); transition: transform .2s var(--ease-out), box-shadow .2s, border-color .2s; }
+.gcard:hover { transform: none; }
+@media (hover: hover) and (pointer: fine) {
+  .gcard:hover { transform: translateY(-4px); border-color: var(--c1); box-shadow: 0 18px 40px rgba(0, 0, 0, .45), 0 0 0 1px var(--c1); }
+  .gcard:hover .art { transform: scale(1.04); }
+}
+.gcard:active { transform: scale(.98); }
+.gcard .btn.violet { --bd: color-mix(in srgb, var(--c1) 55%, #000); --fg: #0b1030; /* bouton clair aux couleurs du jeu, texte foncé : toujours lisible */
+  background: linear-gradient(120deg, color-mix(in srgb, var(--c1) 58%, #fff), color-mix(in srgb, var(--c2) 58%, #fff)); }
+.gcard h3 { letter-spacing: -.01em; }
+/* Comment ça marche : grands chiffres de couleur, sans boîtes */
+.how-step { background: transparent; border: 0; border-top: 2px solid var(--line2); border-radius: 0; padding: 18px 0 0; align-items: flex-start; flex-direction: column; gap: 6px; }
+.how-step b { width: auto; height: auto; background: none !important; font-size: 56px; line-height: 1; }
+.how-step:nth-child(1) b { color: var(--violet); } .how-step:nth-child(2) b { color: var(--blue); } .how-step:nth-child(3) b { color: var(--turq); }
+.how-step span { font-size: 18px; font-weight: 700; }
+/* Modes sans amis : chaque tuile a sa couleur */
+.mode-tile { border-left: 4px solid var(--violet); }
+.mode-tile:nth-child(2) { border-left-color: var(--turq); } .mode-tile:nth-child(3) { border-left-color: var(--yellow); }
+/* Titre du héros : un peu plus serré */
+.hero h2 { letter-spacing: -.025em; }
+@media (prefers-reduced-motion: reduce) { .gcard, .gcard .art { transition: none; } }

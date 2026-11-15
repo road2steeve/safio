@@ -79,6 +79,24 @@
     for (var i = 0; i < n; i++) h += '<i style="animation-delay:-' + ((i * 0.37) % 1.3).toFixed(2) + "s;animation-duration:" + (0.7 + ((i * 7) % 5) / 10).toFixed(2) + 's"></i>';
     return '<div class="bt-eq' + (idle ? " idle" : "") + (small ? " small" : "") + '">' + h + "</div>";
   }
+  // Turbo Bac : le thème en grand, les derniers mots posés et la course aux lettres (jamais les lettres d'un joueur)
+  function tbt(k, v) { return typeof TB !== "undefined" ? TB.t(lang, k, v) : k; }
+  function tbHTML(g) {
+    var x = g.tb || {}, left = x.left || {};
+    if (x.step === "done" || g.sub === "review") {
+      var w = x.winner ? playerOf(x.winner) : null;
+      return '<div class="tb-win">' + (w ? avatar(w, 150) + "<b>" + esc(tbt("winner", { name: w.name })) + "</b>" : "<b>" + esc(tbt("noWinner")) + "</b>") + "</div>";
+    }
+    var th = x.theme || {};
+    var words = (x.words || []).filter(function (w) { return w.cur || w.status === "pending"; }).slice(-6).reverse();
+    var race = Object.keys(left).sort(function (a, b) { return left[a] - left[b]; }).slice(0, 10).map(function (id) {
+      return '<span class="tb-run">' + avatar(playerOf(id), 52) + "<i>" + left[id] + "</i></span>";
+    }).join("");
+    return '<div class="tb-tv-theme"><span class="ico">' + esc(th.ico || "🔥") + "</span><b>" + esc(tr(th)) + '</b><span class="cnt">' + new Array((x.okN || 0) + 1).join("●") + new Array(Math.max(0, (x.perTheme || 5) - (x.okN || 0)) + 1).join("○") + "</span></div>" +
+      '<div class="answers">' + words.map(function (w) {
+        return line(w.pid, w.letter + " · " + w.word, w.status === "ok" ? "ok" : w.status === "ko" ? "no" : "", w.status === "pending" ? "⏳" + (w.n ? " ✋" + w.n : "") : "");
+      }).join("") + '</div><div class="tb-race"><span class="kicker">' + esc(tbt("lettersLeft")) + "</span>" + race + "</div>";
+  }
   // Blind Test : ce que la télé montre (jamais la réponse avant la révélation : elle ne la reçoit pas)
   function btHTML(s, g) {
     var b = g.bt || {}, rev = g.sub === "review";
@@ -652,6 +670,7 @@
       return question(g, true) + solution(g) + fleet + '<div class="log">' + log + "</div>";
     }
     if (id === "blindtest") return btHTML(s, g);
+    if (id === "turbo") return tbHTML(g);
     if (!rev) return question(g);
     // Quiz, Éclair, Au plus près : la correction
     var ans = g.answers || {};

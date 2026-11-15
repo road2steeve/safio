@@ -11,6 +11,7 @@ const bac = require("./games/bac");
 const party = require("./games/party");
 const torpille = require("./games/torpille");
 const { blindtest } = require("./games/blindtest");
+const { turbo } = require("./games/turbo");
 const { filterText } = require("./lib/moderation");
 const { pick, pickTheme } = require("./lib/pick");
 const leaderboard = require("./lib/leaderboard");
@@ -22,11 +23,11 @@ const robix = require("./lib/robix");
 
 const GAMES = {
   quiz: qa.quiz, mytho: party.mytho, bac, duel: qa.duel,
-  brain: party.brain, youre: party.youre, closest: qa.closest, torpille, blindtest,
+  brain: party.brain, youre: party.youre, closest: qa.closest, torpille, blindtest, turbo,
 };
 
 // Maximum réaliste par jeu (au-delà, le jeu devient pénible sur un téléphone). Le salon, lui, accepte 30 personnes.
-const MAX_PLAYERS = { quiz: 16, mytho: 12, bac: 16, torpille: 8 };
+const MAX_PLAYERS = { quiz: 16, mytho: 12, bac: 16, torpille: 8, turbo: 12 };
 const ROOM_MAX = 30;
 
 const PORT = process.env.PORT || 3000;
